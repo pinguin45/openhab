@@ -1,10 +1,30 @@
 /**
- * Copyright (c) 2010-2013, openHAB.org and others.
+ * openHAB, the open Home Automation Bus.
+ * Copyright (C) 2010-2013, openHAB.org <admin@openhab.org>
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the contributors.txt file in the distribution for a
+ * full listing of individual contributors.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses>.
+ *
+ * Additional permission under GNU GPL version 3 section 7
+ *
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with Eclipse (or a modified version of that library),
+ * containing parts covered by the terms of the Eclipse Public License
+ * (EPL), the licensors of this Program grant you additional permission
+ * to convey the resulting work.
  */
 package org.openhab.binding.plcbus.internal.protocol;
 
@@ -38,8 +58,13 @@ public abstract class AbstractReceiveFrameContainer implements IReceiveFrameCont
 	 */
 	@Override
 	public void process(IByteProvider byteProvider) {
-		while (!isReceivingCompleted()) {
-			parseFrame(byteProvider);
+		try
+		{
+			while (!isReceivingCompleted()) {
+				parseFrame(byteProvider);
+			}
+		} catch (Exception e) {
+			logger.error("Error while parsing ReceiveFrame: ", e);
 		}
 	}
 
@@ -56,24 +81,21 @@ public abstract class AbstractReceiveFrameContainer implements IReceiveFrameCont
 	public abstract ReceiveFrame getAnswerFrame();
 	
 	
-	private void parseFrame(IByteProvider byteProvider) {
-		try {
-			byte currentByte = byteProvider.getByte();
+	private void parseFrame(IByteProvider byteProvider) throws Exception {
 
-			if (currentByte == Frame.START_BYTE) {
-				int length = byteProvider.getByte();
+		byte currentByte = byteProvider.getByte();
 
-				if (length > 0) {
-					byte[] data = byteProvider.getBytes(length + 1);
+		if (currentByte == Frame.START_BYTE) {
+			int length = byteProvider.getByte();
 
-					ReceiveFrame frame = new ReceiveFrame();
-					frame.parse(data);
+			if (length > 0) {
+				byte[] data = byteProvider.getBytes(length + 1);
 
-					receiveFrames.add(frame);
-				}
+				ReceiveFrame frame = new ReceiveFrame();
+				frame.parse(data);
+
+				receiveFrames.add(frame);
 			}
-		} catch (Exception e) {
-			logger.error("Error while parsing ReceiveFrame");
 		}
 	}
 

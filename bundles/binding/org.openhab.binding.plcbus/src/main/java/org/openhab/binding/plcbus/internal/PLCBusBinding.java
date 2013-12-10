@@ -1,19 +1,42 @@
 /**
- * Copyright (c) 2010-2013, openHAB.org and others.
+ * openHAB, the open Home Automation Bus.
+ * Copyright (C) 2010-2013, openHAB.org <admin@openhab.org>
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the contributors.txt file in the distribution for a
+ * full listing of individual contributors.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see <http://www.gnu.org/licenses>.
+ *
+ * Additional permission under GNU GPL version 3 section 7
+ *
+ * If you modify this Program, or any covered work, by linking or
+ * combining it with Eclipse (or a modified version of that library),
+ * containing parts covered by the terms of the Eclipse Public License
+ * (EPL), the licensors of this Program grant you additional permission
+ * to convey the resulting work.
  */
 package org.openhab.binding.plcbus.internal;
 
 import java.util.Dictionary;
 
 import org.openhab.binding.plcbus.PLCBusBindingProvider;
+import org.openhab.binding.plcbus.internal.protocol.DefaultOnePhaseReceiveFrameContainer;
 import org.openhab.binding.plcbus.internal.protocol.IPLCBusController;
 import org.openhab.binding.plcbus.internal.protocol.ISerialPortGateway;
+import org.openhab.binding.plcbus.internal.protocol.NRSerialPortAdapter;
 import org.openhab.binding.plcbus.internal.protocol.PLCBusController;
+import org.openhab.binding.plcbus.internal.protocol.ReceiveFrameContainerFactory;
 import org.openhab.binding.plcbus.internal.protocol.SerialPortGateway;
 import org.openhab.binding.plcbus.internal.protocol.StatusResponse;
 import org.openhab.core.binding.AbstractBinding;
@@ -44,6 +67,7 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 
 	private ISerialPortGateway serialPortGateway;
 	
+	private IPLCBusController plcBusController;
 
 	public void activate(ComponentContext componentContext) {
 	}
@@ -71,7 +95,7 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void internalReceiveCommand(String itemName, Command command) {
+	protected synchronized void internalReceiveCommand(String itemName, Command command) {
 
 		PLCBusBindingConfig config = tryGetConfigFor(itemName);
 
@@ -80,21 +104,20 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 			return;
 		}
 
-		IPLCBusController controller = PLCBusController.create(serialPortGateway);
 		if (command == OnOffType.ON) {
-			controller.switchOn(config.getUnit());
+			plcBusController.switchOn(config.getUnit());
 		} else if (command == OnOffType.OFF) {
-			controller.switchOff(config.getUnit());
+			plcBusController.switchOff(config.getUnit());
 		} else if (command == IncreaseDecreaseType.INCREASE) {
-			controller.bright(config.getUnit(), config.getSeconds());
+			plcBusController.bright(config.getUnit(), config.getSeconds());
 		} else if (command == IncreaseDecreaseType.DECREASE) {
-			controller.dim(config.getUnit(), config.getSeconds());
+			plcBusController.dim(config.getUnit(), config.getSeconds());
 		} else if (command == StopMoveType.STOP) {
-			controller.fadeStop(config.getUnit());
+			plcBusController.fadeStop(config.getUnit());
 		} else if (command == UpDownType.UP) {
-			controller.switchOn(config.getUnit());
+			plcBusController.switchOn(config.getUnit());
 		} else if (command == UpDownType.DOWN) {
-			controller.switchOff(config.getUnit());
+			plcBusController.switchOff(config.getUnit());
 		}
 	}
 
@@ -102,7 +125,7 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void internalReceiveUpdate(String itemName, State newState) {
+	protected synchronized void internalReceiveUpdate(String itemName, State newState) {
 
 		PLCBusBindingConfig config = tryGetConfigFor(itemName);
 
@@ -111,10 +134,8 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 			return;
 		}
 
-		IPLCBusController controller = PLCBusController.create(serialPortGateway);
-
 		if (newState == UnDefType.UNDEF) {
-			StatusResponse response = controller.requestStatusFor(config.getUnit());
+			StatusResponse response = plcBusController.requestStatusFor(config.getUnit());
 
 			State status = (response.isUnitOn()) ? OnOffType.ON : OnOffType.OFF;
 			this.eventPublisher.postUpdate(itemName, status);
@@ -137,11 +158,13 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 		if (config == null) {
 			return;
 		}
-		serialPortGateway = SerialPortGateway.create((String) config.get("port"));
+		serialPortGateway = SerialPortGateway.create(new NRSerialPortAdapter((String) config.get("port"), 9600));
 
 		if (serialPortGateway == null) {
 			logger.error("No Serialport config in openhab.cfg found");
 		}
+		
+		plcBusController = PLCBusController.create(serialPortGateway, new ReceiveFrameContainerFactory());
 	}
 	
 }
