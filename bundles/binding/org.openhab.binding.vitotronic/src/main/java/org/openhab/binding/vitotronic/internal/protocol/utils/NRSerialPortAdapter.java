@@ -52,7 +52,7 @@ public class NRSerialPortAdapter implements ISerialPort {
 	 */
 	@Override
 	public void open() throws SerialPortException {
-		serialPort.connect(8, 2, 2);
+		serialPort.connect();
 	}
 
 	/* (non-Javadoc)
