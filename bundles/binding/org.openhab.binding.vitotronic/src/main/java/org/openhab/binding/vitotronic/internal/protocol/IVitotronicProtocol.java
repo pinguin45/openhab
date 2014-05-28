@@ -32,20 +32,20 @@ import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 
 /**
  * @author Robin Lenz
- *
+ * @since 1.0.0
  */
-public class Init implements IByteProtocolFrame {
+public interface IVitotronicProtocol {
+	IByteQueue getByteQueueForInit();
+	IByteQueue getByteQueueForReset();
+	IByteQueue getByteQueueForReadingParameter(IParameter parameter);
+	IByteQueue getByteQueueForWritingParameter(IParameter parameter);
 	
-	/**
-	 * @return bytes of init frame
-	 */
-	public IByteQueue getByteQueue() {
-		IByteQueue byteQueue = new ByteQueue();
-		
-		byteQueue.enque((byte) 0x16);
-		byteQueue.enque((byte) 0x00);
-		byteQueue.enque((byte) 0x00);
-		
-		return byteQueue;
-	}
+	int expectedInitResponseSize();
+	int expectedResetResponseSize();
+	int expectedReadingParameterResponseSize(IParameter parameter);
+	int expectedWritingParameterResponseSize(IParameter parameter);
+
+	boolean isInitialized(IByteQueue byteQueue);
+	boolean isReseted(IByteQueue byteQueue);
+	IParameter parseReadParameterResponse(IByteQueue byteQueue);
 }

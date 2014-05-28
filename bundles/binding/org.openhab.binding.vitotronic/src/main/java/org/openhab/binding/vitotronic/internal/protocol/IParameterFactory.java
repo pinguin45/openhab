@@ -28,24 +28,10 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import org.openhab.binding.vitotronic.internal.protocol.utils.*;
-
 /**
  * @author Robin Lenz
- *
+ * @since 1.0.0
  */
-public class Init implements IByteProtocolFrame {
-	
-	/**
-	 * @return bytes of init frame
-	 */
-	public IByteQueue getByteQueue() {
-		IByteQueue byteQueue = new ByteQueue();
-		
-		byteQueue.enque((byte) 0x16);
-		byteQueue.enque((byte) 0x00);
-		byteQueue.enque((byte) 0x00);
-		
-		return byteQueue;
-	}
+public interface IParameterFactory {
+	IParameter createParameterFor(int address);
 }

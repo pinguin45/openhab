@@ -28,6 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
+
 /**
  * @author Robin Lenz
  * @since 1.0.0

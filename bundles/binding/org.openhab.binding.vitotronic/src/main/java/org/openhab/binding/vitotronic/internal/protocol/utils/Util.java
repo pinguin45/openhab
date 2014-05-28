@@ -40,32 +40,15 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class Util {
-
-	private static Logger logger = LoggerFactory.getLogger(Util.class);
 	
-	public static void printBytes(List<Byte> bytes) {
-		
-		String all = new String();
-		
-		for (Byte current : bytes)
-		{
-			all = all + String.format("%X ", current);
-		}
-		
-		//System.out.print(all);
-		logger.info(all);
-	}
-	
-	public static void printBytes(byte[] bytes) {
-		
+	public static String getByteStringFor(byte[] bytes) {
 		String all = new String();
 		
 		for (byte current : bytes)
 		{
-			all = all + String.format("%X ", current);
+			all = all + String.format("%02X ", current);
 		}
 		
-		//System.out.print(all);
-		logger.info(all);
+		return all.trim();
 	}
 }

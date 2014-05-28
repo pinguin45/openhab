@@ -28,22 +28,28 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import java.util.List;
+import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
 public interface IParameter {
-	
+	int addressSize();
+	int dataSize();
+		
 	/**
 	 * @return this bytes of parameter
 	 */
-	List<Byte> getBytes();
+	IByteQueue getByteQueue();
 	
 	/**
 	 * 
 	 * @param bytes
 	 */
-	void parse(List<Byte> bytes);
+	void parse(IByteQueue byteQueue);
+	/**
+	 * @param dataBytes
+	 */
+	void parseDataBytes(byte[] dataBytes);
 }

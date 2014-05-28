@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.openhab.binding.vitotronic.internal.protocol.utils.Convert;
 import org.openhab.binding.vitotronic.internal.protocol.utils.IByteProtocolFrame;
 import org.openhab.binding.vitotronic.internal.protocol.utils.IByteProvider;
+import org.openhab.binding.vitotronic.internal.protocol.utils.IByteQueue;
 import org.openhab.binding.vitotronic.internal.protocol.utils.IReceiveByteProcessor;
 import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort;
 import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPortGateway;
@@ -70,14 +71,14 @@ public class SerialPortGatwayTest {
 
 	@Test
 	public void testSend_WithSerialPortConnected() throws Exception {
-		List<Byte> bytes = new ArrayList<Byte>();
+		IByteQueue bytes = null;
 		IByteProtocolFrame frame = mock(IByteProtocolFrame.class);
 		IReceiveByteProcessor processor = mock(IReceiveByteProcessor.class);
 		ISerialPort serialPort = mock(ISerialPort.class);
 		
 		when(serialPort.isOpen()).thenReturn(true);
-		when(frame.getBytes()).thenReturn(bytes);
-		when(serialPort.writeBytes(Convert.toByteArray(bytes))).thenReturn(true);
+		when(frame.getByteQueue()).thenReturn(bytes);
+		when(serialPort.writeBytes(bytes.toByteArray())).thenReturn(true);
 		
 		ISerialPortGateway testObject = SerialPortGateway.create(serialPort);
 		testObject.send(frame, processor);
@@ -90,14 +91,14 @@ public class SerialPortGatwayTest {
 
 	@Test
 	public void testSend_WithSerialPortNotConnected() throws Exception {
-		List<Byte> bytes = new ArrayList<Byte>();
+		IByteQueue byteQueue = null;
 		IByteProtocolFrame frame = mock(IByteProtocolFrame.class);
 		IReceiveByteProcessor processor = mock(IReceiveByteProcessor.class);
 		ISerialPort serialPort = mock(ISerialPort.class);
 	
 		when(serialPort.isOpen()).thenReturn(false);
-		when(frame.getBytes()).thenReturn(bytes);	
-		when(serialPort.writeBytes(Convert.toByteArray(bytes))).thenReturn(true);	
+		when(frame.getByteQueue()).thenReturn(byteQueue);	
+		when(serialPort.writeBytes(byteQueue.toByteArray())).thenReturn(true);	
 	
 		ISerialPortGateway testObject = SerialPortGateway.create(serialPort);
 		testObject.send(frame, processor);

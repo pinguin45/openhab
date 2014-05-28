@@ -70,7 +70,9 @@ public class SerialPortGateway implements ISerialPortGateway {
 				connect();
 			}
 			
-			byte[] paket = Convert.toByteArray(frame.getBytes());
+			IByteQueue byteQueue = frame.getByteQueue();
+			
+			byte[] paket = byteQueue.toByteArray();
 			
 			serialPort.readBytes();
 			boolean bytesWritten = serialPort.writeBytes(paket);

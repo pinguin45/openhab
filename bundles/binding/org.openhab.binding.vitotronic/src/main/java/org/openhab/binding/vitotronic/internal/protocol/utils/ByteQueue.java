@@ -26,26 +26,85 @@
  * (EPL), the licensors of this Program grant you additional permission
  * to convey the resulting work.
  */
-package org.openhab.binding.vitotronic.internal.protocol;
+package org.openhab.binding.vitotronic.internal.protocol.utils;
 
-import org.openhab.binding.vitotronic.internal.protocol.utils.*;
+import java.util.ArrayDeque;
+import java.util.Queue;
+
 
 /**
  * @author Robin Lenz
- *
+ * @since 1.0.0
  */
-public class Init implements IByteProtocolFrame {
+public class ByteQueue implements IByteQueue {
+
+	private Queue<Byte> queue;
 	
-	/**
-	 * @return bytes of init frame
-	 */
-	public IByteQueue getByteQueue() {
-		IByteQueue byteQueue = new ByteQueue();
+	public ByteQueue() {
+		queue = new ArrayDeque<Byte>();
+	}
+	
+	public ByteQueue(byte[] bytes) {
+		this();
 		
-		byteQueue.enque((byte) 0x16);
-		byteQueue.enque((byte) 0x00);
-		byteQueue.enque((byte) 0x00);
+		for (byte currentByte : bytes)
+		{
+			enque(currentByte);
+		}
+	}
+	
+	@Override
+	public boolean hasBytesEnqued() {
+		return size() > 0;
+	}
+	
+	@Override
+	public int size() {
+		return queue.size();
+	}
+
+	@Override
+	public void enque(byte item) {
+		queue.add(item);
+	}
+
+	@Override
+	public void enque(int item) {
+		queue.add((byte)item);
+	}
+	
+	@Override
+	public void enqueAll(IByteQueue otherByteQueue) {
+		if (otherByteQueue == null)
+		{
+			return;
+		}
 		
-		return byteQueue;
+		byte[] bytesFromOtherByteQueue = otherByteQueue.toByteArray();
+		
+		for (byte currentByte : bytesFromOtherByteQueue)
+		{
+			enque(currentByte);
+		}
+	}
+
+	@Override
+	public byte deque() {
+		return queue.poll();
+	}
+
+	@Override
+	public byte[] toByteArray() {
+		byte[] array = new byte[queue.size()];
+		
+		int pos = 0;
+		
+		for (Byte currentByte : queue)
+		{
+			array[pos] = currentByte;
+			pos++;
+		}
+		
+		return array;
 	}
 }

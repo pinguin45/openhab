@@ -28,10 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.config;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.*;
 
 /**
  * @author Robin Lenz
@@ -50,5 +47,25 @@ public class Device {
 	@XmlAttribute
 	private String protocol;
 	
+	public Device() {
+		
+	}
 	
+	public Device(String id, String name, String protocol) {
+		this.id = id;
+		this.name = name;
+		this.protocol = protocol;
+	}
+	
+	public String getId() {
+		return this.id;
+	}
+	
+	public String getName() {
+		return this.name;
+	}
+	
+	public String getProtocol() {
+		return this.protocol;
+	}
 }

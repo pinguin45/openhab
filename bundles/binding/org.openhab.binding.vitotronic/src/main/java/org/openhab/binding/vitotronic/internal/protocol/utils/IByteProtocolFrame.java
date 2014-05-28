@@ -28,7 +28,6 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol.utils;
 
-import java.util.List;
 
 /**
  * Interface for a ByteProtocolFrame
@@ -39,5 +38,5 @@ public interface IByteProtocolFrame {
 	/**
 	 * @return bytes of ProtocolFrame
 	 */
-	List<Byte> getBytes();
+	IByteQueue getByteQueue();
 }

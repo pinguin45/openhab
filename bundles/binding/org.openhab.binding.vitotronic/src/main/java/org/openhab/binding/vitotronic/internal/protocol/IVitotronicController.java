@@ -28,6 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
+
 /**
  * Interface for a VitotronicController
  * @author Robin Lenz
@@ -69,34 +70,4 @@ public interface IVitotronicController {
 	 * @param parameter
 	 */
 	void write(IWriteableParameter parameter);
-	
-	/**
-	 * @return the devivce identnumber
-	 */
-	String getDeviceIdentnumber();
-	
-	/**
-	 * @return the number of burnerstarts
-	 */
-	int getBurnerStarts();
-	
-	/**
-	 * @return betriebsstunden
-	 */
-	int getBetriebsstunden();
-	
-	/**
-	 * @return aussentemperatur
-	 */
-	double getAussentemperatur();
-	
-	/**
-	 * @return RaumtemperaturSoll
-	 */
-	int getRaumtemperaturSoll();
-	
-	/**
-	 * @return Brennerleistung in Prozent
-	 */
-	int getBrennerleistung();
 }

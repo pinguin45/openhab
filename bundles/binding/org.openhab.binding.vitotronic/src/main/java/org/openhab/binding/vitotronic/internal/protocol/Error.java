@@ -28,6 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
+
 /**
  * Telegram for errors
  * @author Robin Lenz

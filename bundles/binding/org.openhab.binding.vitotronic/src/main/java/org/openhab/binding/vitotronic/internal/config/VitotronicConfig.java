@@ -28,11 +28,13 @@
  */
 package org.openhab.binding.vitotronic.internal.config;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlElements;
 
@@ -44,9 +46,35 @@ import javax.xml.bind.annotation.XmlElements;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class VitotronicConfig {
 
-	@XmlElements(@XmlElement(name = "device"))
+	@XmlElementWrapper(name = "devices")
+	@XmlElement(name = "device")
     private List<Device> devices;
 	
-	@XmlElement
+	@XmlElementWrapper(name = "commands")
+	@XmlElement(name = "command")
     private List<Command> commands;
+
+	public VitotronicConfig() {
+		devices = new ArrayList<Device>();
+		commands = new ArrayList<Command>();
+	}
+	
+	public void addDevice(Device device) {
+		devices.add(device);
+	}
+	
+	public void addCommand(Command command) {
+		commands.add(command);
+	}
+	
+	public Command getCommandBy(String name) {
+		
+		for (Command command : commands) {
+			if (command.getName().equals(name)) {
+				return command;
+			}
+		}
+		
+		return null;
+	}
 }

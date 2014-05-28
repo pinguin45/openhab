@@ -26,26 +26,36 @@
  * (EPL), the licensors of this Program grant you additional permission
  * to convey the resulting work.
  */
-package org.openhab.binding.vitotronic.internal.protocol;
+package org.openhab.binding.vitotronic.internal.config;
 
-import org.openhab.binding.vitotronic.internal.protocol.utils.*;
+import org.openhab.binding.vitotronic.internal.protocol.IParameter;
+import org.openhab.binding.vitotronic.internal.protocol.Parameter;
 
 /**
  * @author Robin Lenz
- *
+ * @since 1.0.0
  */
-public class Init implements IByteProtocolFrame {
+public class VitotronicConfigController implements IVitotronicConfigController {
+
+	private VitotronicConfig config;
 	
-	/**
-	 * @return bytes of init frame
-	 */
-	public IByteQueue getByteQueue() {
-		IByteQueue byteQueue = new ByteQueue();
-		
-		byteQueue.enque((byte) 0x16);
-		byteQueue.enque((byte) 0x00);
-		byteQueue.enque((byte) 0x00);
-		
-		return byteQueue;
+	public VitotronicConfigController(VitotronicConfig config) {
+		this.config = config;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.openhab.binding.vitotronic.internal.config.IVitotronicConfigController#getParameterFor(java.lang.String)
+	 */
+	@Override
+	public IParameter getParameterFor(String commandName) {
+		Command command = config.getCommandBy(commandName);
+		
+		if (command == null)
+		{
+			return null;
+		}
+		
+		return new Parameter(command.getAddress());
+	}
+
 }

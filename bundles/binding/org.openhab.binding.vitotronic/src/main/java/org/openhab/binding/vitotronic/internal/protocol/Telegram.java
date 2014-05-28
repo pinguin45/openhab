@@ -31,10 +31,9 @@
 
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import org.openhab.binding.vitotronic.internal.protocol.utils.IByteProtocolFrame;
+import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 
 /**
  * Baseclass for telegrams
@@ -69,18 +68,18 @@ public abstract class Telegram<TParameter extends IParameter> implements IBytePr
 		this.command = command;
 	}
 
-	public List<Byte> getBytes() {
-		List<Byte> result = new ArrayList<Byte>();
+	public IByteQueue getByteQueue() {
+		IByteQueue result = new ByteQueue();
 		
-		result.add(START_BYTE);
+		result.enque(START_BYTE);
 		
 		if (command != null)
 		{
-			List<Byte> commandBytes = command.getBytes();
-			result.add((byte) (commandBytes.size() + 1));
-			result.add(getType());
-			result.addAll(commandBytes);
-			result.add(getPruefsummeOf(result));
+			IByteQueue commandBytes = command.getByteQueue();
+			result.enque((byte) (commandBytes.size() + 1));
+			result.enque(getType());
+			result.enqueAll(commandBytes);
+			result.enque(getPruefsummeOf(result.toByteArray()));
 		}
 		
 		return result;
@@ -128,14 +127,14 @@ public abstract class Telegram<TParameter extends IParameter> implements IBytePr
 		return null;
 	}
 
-	private Byte getPruefsummeOf(List<Byte> bytes) {
+	private byte getPruefsummeOf(byte[] bytes) {
 		Byte result = 0x00;
 		
-		for (int pos = 0; pos < bytes.size(); pos++)
+		for (int pos = 0; pos < bytes.length; pos++)
 		{			
 			if (pos > 0)
 			{
-				result = (byte) (result + bytes.get(pos));
+				result = (byte) (result + bytes[pos]);
 			}
 		}
 		

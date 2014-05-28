@@ -31,9 +31,7 @@ package org.openhab.binding.vitotronic.internal.protocol;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.openhab.binding.vitotronic.internal.protocol.parameters.AddressFactory;
 import org.openhab.binding.vitotronic.internal.protocol.utils.Convert;
-import org.openhab.binding.vitotronic.internal.protocol.utils.Util;
 
 /**
  * Baseclass for Parameters
@@ -44,11 +42,14 @@ public abstract class Parameter implements IParameter {
 	
 	private List<Byte> values;
 	
+	private int address;
+	
 	/**
 	 * Constructor
 	 */
-	public Parameter() {
-		values = new ArrayList<Byte>();
+	public Parameter(int address) {
+		this.values = new ArrayList<Byte>();
+		this.address = address;		
 	}
 	
 	/**
@@ -120,7 +121,7 @@ public abstract class Parameter implements IParameter {
 	 * @return the address of Parameter
 	 */
 	protected int getAddress() {
-		return AddressFactory.getAddressFor(this.getClass());
+		return address;
 	}
 	
 	/**

@@ -28,36 +28,17 @@
  */
 package org.openhab.binding.vitotronic.internal;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Dictionary;
-import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.*;
+import java.util.concurrent.locks.*;
 
-import org.openhab.binding.vitotronic.VitotronicBindingProvider;
-import org.openhab.binding.vitotronic.internal.VitotronicBindingConfig.CommandTyp;
-import org.openhab.binding.vitotronic.internal.protocol.IBooleanParameter;
-import org.openhab.binding.vitotronic.internal.protocol.IDecimalParameter;
-import org.openhab.binding.vitotronic.internal.protocol.IIntegerParameter;
-import org.openhab.binding.vitotronic.internal.protocol.IStringParameter;
-import org.openhab.binding.vitotronic.internal.protocol.IVitotronicController;
-import org.openhab.binding.vitotronic.internal.protocol.IWriteableBooleanParameter;
-import org.openhab.binding.vitotronic.internal.protocol.Parameter;
-import org.openhab.binding.vitotronic.internal.protocol.ReceiveByteProcessorFactory;
-import org.openhab.binding.vitotronic.internal.protocol.VitotronicController;
-import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPortGateway;
-import org.openhab.binding.vitotronic.internal.protocol.utils.JsscSerialPort;
-import org.openhab.binding.vitotronic.internal.protocol.utils.NRSerialPortAdapter;
-import org.openhab.binding.vitotronic.internal.protocol.utils.SerialPortGateway;
-import org.openhab.binding.vitotronic.internal.protocol.utils.TCPSerialPort;
+import org.openhab.binding.vitotronic.*;
+import org.openhab.binding.vitotronic.internal.protocol.*;
+import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 import org.openhab.core.binding.AbstractActiveBinding;
 import org.openhab.core.library.types.*;
 import org.openhab.core.types.Command;
-import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.cm.ManagedService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.osgi.service.cm.*;
+import org.slf4j.*;
 
 /**
  * Binding for Vitotronic

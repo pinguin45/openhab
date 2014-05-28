@@ -60,4 +60,27 @@ public class Command {
 	@XmlElement
 	private String description;
 	
+	public String getName() {
+		return this.name;
+	}
+	
+	public String getProtocolCommand() {
+		return this.protocolCommand;
+	}
+	
+	public int getAddress() {
+		return Integer.parseInt(this.address, 16);
+	}
+	
+	public int getLength() {
+		return this.length;
+	}
+	
+	public String getUnit() {
+		return this.unit;
+	}
+	
+	public String getDescription() {
+		return this.description;
+	}
 }

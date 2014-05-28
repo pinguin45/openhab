@@ -31,29 +31,10 @@
 
 import static org.junit.Assert.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentMatcher;
-import org.mockito.Matchers;
-import org.openhab.binding.vitotronic.internal.protocol.AcknowledgementProcessor;
-import org.openhab.binding.vitotronic.internal.protocol.Command;
-import org.openhab.binding.vitotronic.internal.protocol.IDecimalParameter;
-import org.openhab.binding.vitotronic.internal.protocol.IIntegerParameter;
-import org.openhab.binding.vitotronic.internal.protocol.IReceiveByteProcessorFactory;
-import org.openhab.binding.vitotronic.internal.protocol.IStringParameter;
-import org.openhab.binding.vitotronic.internal.protocol.IVitotronicController;
-import org.openhab.binding.vitotronic.internal.protocol.IWriteableParameter;
-import org.openhab.binding.vitotronic.internal.protocol.Init;
-import org.openhab.binding.vitotronic.internal.protocol.Parameter;
-import org.openhab.binding.vitotronic.internal.protocol.Request;
-import org.openhab.binding.vitotronic.internal.protocol.Reset;
-import org.openhab.binding.vitotronic.internal.protocol.ResetProcessor;
-import org.openhab.binding.vitotronic.internal.protocol.VitotronicController;
-import org.openhab.binding.vitotronic.internal.protocol.VitotronicParameterProcessor;
-import org.openhab.binding.vitotronic.internal.protocol.Write;
-import org.openhab.binding.vitotronic.internal.protocol.parameters.*;
-import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPortGateway;
+import org.junit.*;
+import org.mockito.*;
+import org.openhab.binding.vitotronic.internal.protocol.*;
+import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -112,126 +93,6 @@ public class VitotronicControllerTest {
 	}
 
 	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#getDeviceIdentnumber()}.
-	 */
-	@Test
-	public void testGetDeviceIdentnumber() {
-		String expectedParameterValue = "testDeviceNumber";
-		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<DeviceIdentitynumber> processor = mock(VitotronicParameterProcessor.class);
-		DeviceIdentitynumber parameter = mock(DeviceIdentitynumber.class);
-		
-		when(factory.<DeviceIdentitynumber>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(parameter);
-		when(parameter.getIdentitynumber()).thenReturn(expectedParameterValue);
-		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		String found = controller.getDeviceIdentnumber();
-		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
-		verify(parameter).getIdentitynumber();
-		assertEquals(expectedParameterValue, found);
-	}
-
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#getBurnerStarts()}.
-	 */
-	@Test
-	public void testGetBurnerStarts() {
-		int expectedParameterValue = 10;
-		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<BurnerStarts> processor = mock(VitotronicParameterProcessor.class);
-		BurnerStarts parameter = mock(BurnerStarts.class);
-		
-		when(factory.<BurnerStarts>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(parameter);
-		when(parameter.getCount()).thenReturn(expectedParameterValue);
-		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		int found = controller.getBurnerStarts();
-		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
-		verify(parameter).getCount();
-		assertEquals(expectedParameterValue, found);
-	}
-
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#getBetriebsstunden()}.
-	 */
-	@Test
-	public void testGetBetriebsstunden() {
-		int expectedParameterValue = 10;
-		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<Betriebsstunden> processor = mock(VitotronicParameterProcessor.class);
-		Betriebsstunden parameter = mock(Betriebsstunden.class);
-		
-		when(factory.<Betriebsstunden>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(parameter);
-		when(parameter.getHours()).thenReturn(expectedParameterValue);
-		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		int found = controller.getBetriebsstunden();
-		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
-		verify(parameter).getHours();
-		assertEquals(expectedParameterValue, found);
-	}
-
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#getAussentemperatur()}.
-	 */
-	@Test
-	public void testGetAussentemperatur() {
-		double expectedParameterValue = 25.0;
-		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<Aussentemperatur> processor = mock(VitotronicParameterProcessor.class);
-		Aussentemperatur parameter = mock(Aussentemperatur.class);
-		
-		when(factory.<Aussentemperatur>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(parameter);
-		when(parameter.getTemperatur()).thenReturn(expectedParameterValue);
-		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		double found = controller.getAussentemperatur();
-		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
-		verify(parameter).getTemperatur();
-		assertEquals(expectedParameterValue, found, 1);
-	}
-
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#getRaumtemperaturSoll()}.
-	 */
-	@Test
-	public void testGetRaumtemperaturSoll() {
-		int expectedParameterValue = 25;
-		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<RaumtemperaturSoll> processor = mock(VitotronicParameterProcessor.class);
-		RaumtemperaturSoll parameter = mock(RaumtemperaturSoll.class);
-		
-		when(factory.<RaumtemperaturSoll>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(parameter);
-		when(parameter.getTemperatur()).thenReturn(expectedParameterValue);
-		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		int found = controller.getRaumtemperaturSoll();
-		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
-		verify(parameter).getTemperatur();
-		assertEquals(expectedParameterValue, found);
-	}
-
-	/**
 	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#reset()}.
 	 */
 	@Test
@@ -249,31 +110,7 @@ public class VitotronicControllerTest {
 	}
 
 	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#getBrennerleistung()}.
-	 */
-	@Test
-	public void testGetBrennerleistung() {
-		int expectedParameterValue = 100;
-		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<Brennerleistung> processor = mock(VitotronicParameterProcessor.class);
-		Brennerleistung parameter = mock(Brennerleistung.class);
-		
-		when(factory.<Brennerleistung>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(parameter);
-		when(parameter.getProzent()).thenReturn(expectedParameterValue);
-		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		int found = controller.getBrennerleistung();
-		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
-		verify(parameter).getProzent();
-		assertEquals(expectedParameterValue, found);
-	}
-
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.Parameter)}.
+	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.parameters.Parameter)}.
 	 */
 	@Test
 	public void testReadValueOf() {
@@ -299,7 +136,7 @@ public class VitotronicControllerTest {
 	}
 
 	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.Parameter)}.
+	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.parameters.Parameter)}.
 	 */
 	@Test
 	public void testReadDecimalOf() {
@@ -325,7 +162,7 @@ public class VitotronicControllerTest {
 	}
 	
 	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.Parameter)}.
+	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.parameters.Parameter)}.
 	 */
 	@Test
 	public void testReadIntegerOf() {
@@ -350,7 +187,7 @@ public class VitotronicControllerTest {
 		assertEquals(expectedParameterValue, found, 0);
 	}
 	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#write(org.openhab.binding.vitotronic.internal.protocol.Parameter)}.
+	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#write(org.openhab.binding.vitotronic.internal.protocol.parameters.Parameter)}.
 	 */
 	@Test
 	public void testWrite() {

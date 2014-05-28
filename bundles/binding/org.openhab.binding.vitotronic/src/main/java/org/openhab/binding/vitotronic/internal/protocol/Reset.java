@@ -28,10 +28,9 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import org.openhab.binding.vitotronic.internal.protocol.utils.IByteProtocolFrame;
+import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 
 /**
  * @author Robin Lenz
@@ -43,10 +42,10 @@ public class Reset implements IByteProtocolFrame {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<Byte> getBytes() {
-		List<Byte> result = new ArrayList<Byte>();
+	public IByteQueue getByteQueue() {
+		IByteQueue result = new ByteQueue();
 		
-		result.add((byte) 0x04);
+		result.enque(0x04);
 		
 		return result;
 	}

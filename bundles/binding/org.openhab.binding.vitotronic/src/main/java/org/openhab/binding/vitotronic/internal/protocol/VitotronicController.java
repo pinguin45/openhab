@@ -28,13 +28,6 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import org.openhab.binding.vitotronic.internal.protocol.parameters.Aussentemperatur;
-import org.openhab.binding.vitotronic.internal.protocol.parameters.Betriebsstunden;
-import org.openhab.binding.vitotronic.internal.protocol.parameters.Brennerleistung;
-import org.openhab.binding.vitotronic.internal.protocol.parameters.BurnerStarts;
-import org.openhab.binding.vitotronic.internal.protocol.parameters.DeviceIdentitynumber;
-import org.openhab.binding.vitotronic.internal.protocol.parameters.RaumtemperaturSoll;
-import org.openhab.binding.vitotronic.internal.protocol.utils.IByteProtocolFrame;
 import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPortGateway;
 
 /**
@@ -112,69 +105,9 @@ public class VitotronicController implements IVitotronicController {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public String getDeviceIdentnumber() {
-		DeviceIdentitynumber parameter =  read(new DeviceIdentitynumber());
-		
-		return parameter.getIdentitynumber();
-	}
-	
-	/* 
-	 * {@inheritDoc}
-	 */
-	@Override
-	public int getBurnerStarts() {
-		BurnerStarts parameter =  read(new BurnerStarts());
-		
-		return parameter.getCount();
-	}
-	
-	/* 
-	 * {@inheritDoc}
-	 */
-	@Override
-	public int getBetriebsstunden() {
-		Betriebsstunden parameter =  read(new Betriebsstunden());
-		
-		return parameter.getHours();
-	}
-	
-	/* 
-	 * {@inheritDoc}
-	 */
-	@Override
-	public double getAussentemperatur() {
-		Aussentemperatur parameter =  read(new Aussentemperatur());
-		
-		return parameter.getTemperatur();
-	}
-	
-	/* 
-	 * {@inheritDoc}
-	 */
-	@Override
-	public int getRaumtemperaturSoll() {
-		RaumtemperaturSoll parameter =  read(new RaumtemperaturSoll());
-		
-		return parameter.getTemperatur();
-	}
-
-	/* 
-	 * {@inheritDoc}
-	 */
-	@Override
 	public void reset() {
 		ResetProcessor processor = receiveByteProcessorFactory.createResetProcessor();
 		serialPortGateway.send(new Reset(), processor);
-	}
-
-	/* 
-	 * {@inheritDoc}
-	 */
-	@Override
-	public int getBrennerleistung() {
-		Brennerleistung parameter =  read(new Brennerleistung());
-		
-		return parameter.getProzent();
 	}
 
 	@Override

@@ -28,11 +28,8 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.openhab.binding.vitotronic.internal.protocol.parameters.AddressFactory;
-import org.openhab.binding.vitotronic.internal.protocol.utils.Util;
+import java.util.*;
+import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 
 /**
  * Baseclass for commands
@@ -72,14 +69,14 @@ public abstract class Command<TParameter extends IParameter> {
 	/**
 	 * @return bytes of command
 	 */
-	public List<Byte> getBytes() {
-		List<Byte> result = new ArrayList<Byte>();
+	public IByteQueue getByteQueue() {
+		IByteQueue result = new ByteQueue();
 		
-		result.add(getType());
+		result.enque(getType());
 		
 		if (parameter != null)
 		{
-			result.addAll(parameter.getBytes());
+			result.enqueAll(parameter.getByteQueue());
 		}
 		
 		return result;

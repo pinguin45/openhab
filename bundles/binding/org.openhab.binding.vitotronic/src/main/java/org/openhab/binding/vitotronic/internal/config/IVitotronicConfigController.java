@@ -26,26 +26,15 @@
  * (EPL), the licensors of this Program grant you additional permission
  * to convey the resulting work.
  */
-package org.openhab.binding.vitotronic.internal.protocol;
+package org.openhab.binding.vitotronic.internal.config;
 
-import org.openhab.binding.vitotronic.internal.protocol.utils.*;
+import org.openhab.binding.vitotronic.internal.protocol.IParameter;
 
 /**
  * @author Robin Lenz
- *
+ * @since 1.0.0
  */
-public class Init implements IByteProtocolFrame {
+public interface IVitotronicConfigController {
 	
-	/**
-	 * @return bytes of init frame
-	 */
-	public IByteQueue getByteQueue() {
-		IByteQueue byteQueue = new ByteQueue();
-		
-		byteQueue.enque((byte) 0x16);
-		byteQueue.enque((byte) 0x00);
-		byteQueue.enque((byte) 0x00);
-		
-		return byteQueue;
-	}
+	IParameter getParameterFor(String commandName);
 }
