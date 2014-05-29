@@ -66,7 +66,7 @@ public class ByteQueueTest {
 	}
 
 	private byte[] enqueBytesIn(IByteQueue byteQueue) {
-		byte[] bytesToEnque = new byte[] { 0x00, 0x01, 0x02, 0x03 };
+		byte[] bytesToEnque = To.ByteArray("00 01 02 03");
 		
 		for (int pos = 0; pos < 4; pos++)
 		{
@@ -79,16 +79,27 @@ public class ByteQueueTest {
 	@Test
 	public void testEnqueAll() {
 		IByteQueue testObject = new ByteQueue();
-		testObject.enqueAll(null);		
+		testObject.enqueAll((IByteQueue)null);		
+		assertFalse(testObject.hasBytesEnqued());
+		
+		testObject.enqueAll((byte[])null);		
 		assertFalse(testObject.hasBytesEnqued());
 		
 		testObject.enqueAll(new ByteQueue());		
+		assertFalse(testObject.hasBytesEnqued());
+		
+		testObject.enqueAll(new byte[0]);		
 		assertFalse(testObject.hasBytesEnqued());
 		
 		IByteQueue byteQueueToEnqueInTestObject = new ByteQueue();
 		byte[] enquedBytes = enqueBytesIn(byteQueueToEnqueInTestObject);		
 		testObject.enqueAll(byteQueueToEnqueInTestObject);		
 		assertArrayEquals(enquedBytes, testObject.toByteArray());
+		
+		byte[] bytesToEnque = To.ByteArray("01 02 03 04");
+		testObject = new ByteQueue();
+		testObject.enqueAll(bytesToEnque);
+		assertArrayEquals(bytesToEnque, testObject.toByteArray());
 	}
 	
 	@Test

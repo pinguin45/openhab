@@ -29,23 +29,8 @@
 package org.openhab.binding.vitotronic.internal.protocol.utils.test;
 
 import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import jssc.SerialPort;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.openhab.binding.vitotronic.internal.protocol.utils.Convert;
-import org.openhab.binding.vitotronic.internal.protocol.utils.IByteProtocolFrame;
-import org.openhab.binding.vitotronic.internal.protocol.utils.IByteProvider;
-import org.openhab.binding.vitotronic.internal.protocol.utils.IByteQueue;
-import org.openhab.binding.vitotronic.internal.protocol.utils.IReceiveByteProcessor;
-import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort;
-import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPortGateway;
-import org.openhab.binding.vitotronic.internal.protocol.utils.SerialPortByteProvider;
-import org.openhab.binding.vitotronic.internal.protocol.utils.SerialPortGateway;
+import org.junit.*;
+import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 
 import static org.mockito.Mockito.*;
 
@@ -55,58 +40,60 @@ import static org.mockito.Mockito.*;
  */
 public class SerialPortGatwayTest {
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@Before
 	public void setUp() throws Exception {
 	}
 
-	/**
-	 * @throws java.lang.Exception
-	 */
 	@After
 	public void tearDown() throws Exception {
 	}
 
 	@Test
-	public void testSend_WithSerialPortConnected() throws Exception {
-		IByteQueue bytes = null;
-		IByteProtocolFrame frame = mock(IByteProtocolFrame.class);
-		IReceiveByteProcessor processor = mock(IReceiveByteProcessor.class);
+	public void testSendBytesAndWaitForResponse_WithAllBytesAvailable() throws Exception {
+		IByteQueue requestBytes = To.ByteQueue("01 02 03 04 05");
+		IByteQueue expectedResponseBytes = To.ByteQueue("05 04 03 02 01");
 		ISerialPort serialPort = mock(ISerialPort.class);
 		
-		when(serialPort.isOpen()).thenReturn(true);
-		when(frame.getByteQueue()).thenReturn(bytes);
-		when(serialPort.writeBytes(bytes.toByteArray())).thenReturn(true);
+		when(serialPort.getAvailableBytesCount()).thenReturn(expectedResponseBytes.size());
+		when(serialPort.readBytes(expectedResponseBytes.size())).thenReturn(expectedResponseBytes.toByteArray());
 		
-		ISerialPortGateway testObject = SerialPortGateway.create(serialPort);
-		testObject.send(frame, processor);
+		ISerialPortGateway testObject = new SerialPortGateway(serialPort);
+		IByteQueue foundResponseBytes = testObject.sendBytesAndWaitForResponse(requestBytes, expectedResponseBytes.size());
 		
-		verify(serialPort).readBytes();
-		verify(serialPort).writeBytes(isA(byte[].class));
-		verify(processor).process(isA(SerialPortByteProvider.class));
+		verify(serialPort).writeBytes(requestBytes.toByteArray());
+		assertArrayEquals(expectedResponseBytes.toByteArray(), foundResponseBytes.toByteArray());
 	}
-
-
+	
 	@Test
-	public void testSend_WithSerialPortNotConnected() throws Exception {
-		IByteQueue byteQueue = null;
-		IByteProtocolFrame frame = mock(IByteProtocolFrame.class);
-		IReceiveByteProcessor processor = mock(IReceiveByteProcessor.class);
+	public void testSendBytesAndWaitForResponse_WithBytesAvailableInPartitions() throws Exception {
+		IByteQueue requestBytes = To.ByteQueue("01 02 03 04 05");
+		IByteQueue expectedResponseBytes = To.ByteQueue("05 04 03 02 01");
 		ISerialPort serialPort = mock(ISerialPort.class);
+		
+		when(serialPort.getAvailableBytesCount()).thenReturn(3, 2);
+		when(serialPort.readBytes(3)).thenReturn(To.ByteArray("05 04 03"));
+		when(serialPort.readBytes(2)).thenReturn(To.ByteArray("02 01"));
+		
+		ISerialPortGateway testObject = new SerialPortGateway(serialPort);
+		IByteQueue foundResponseBytes = testObject.sendBytesAndWaitForResponse(requestBytes, expectedResponseBytes.size());
+		
+		verify(serialPort).writeBytes(requestBytes.toByteArray());
+		assertArrayEquals(expectedResponseBytes.toByteArray(), foundResponseBytes.toByteArray());
+	}
 	
-		when(serialPort.isOpen()).thenReturn(false);
-		when(frame.getByteQueue()).thenReturn(byteQueue);	
-		when(serialPort.writeBytes(byteQueue.toByteArray())).thenReturn(true);	
-	
-		ISerialPortGateway testObject = SerialPortGateway.create(serialPort);
-		testObject.send(frame, processor);
-	
-		verify(serialPort).open();
-		verify(serialPort).setParameter(eq(4800), eq(8), eq(2), eq(2));
-		verify(serialPort).readBytes();
-		verify(serialPort).writeBytes(isA(byte[].class));
-		verify(processor).process(isA(SerialPortByteProvider.class));
+	@Test
+	public void testSendBytesAndWaitForResponse_WithMoreAvailabByteThanNeeded() throws Exception {
+		IByteQueue requestBytes = To.ByteQueue("01 02 03 04 05");
+		IByteQueue expectedResponseBytes = To.ByteQueue("05 04 03 02 01");
+		ISerialPort serialPort = mock(ISerialPort.class);
+		
+		when(serialPort.getAvailableBytesCount()).thenReturn(10);
+		when(serialPort.readBytes(expectedResponseBytes.size())).thenReturn(expectedResponseBytes.toByteArray());
+		
+		ISerialPortGateway testObject = new SerialPortGateway(serialPort);
+		IByteQueue foundResponseBytes = testObject.sendBytesAndWaitForResponse(requestBytes, expectedResponseBytes.size());
+		
+		verify(serialPort).writeBytes(requestBytes.toByteArray());
+		assertArrayEquals(expectedResponseBytes.toByteArray(), foundResponseBytes.toByteArray());
 	}
 }

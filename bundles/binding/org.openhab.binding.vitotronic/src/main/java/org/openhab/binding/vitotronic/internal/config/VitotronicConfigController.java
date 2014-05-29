@@ -28,8 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.config;
 
-import org.openhab.binding.vitotronic.internal.protocol.IParameter;
-import org.openhab.binding.vitotronic.internal.protocol.Parameter;
+import org.openhab.binding.vitotronic.internal.protocol.*;
 
 /**
  * @author Robin Lenz
@@ -43,9 +42,6 @@ public class VitotronicConfigController implements IVitotronicConfigController {
 		this.config = config;
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.config.IVitotronicConfigController#getParameterFor(java.lang.String)
-	 */
 	@Override
 	public IParameter getParameterFor(String commandName) {
 		Command command = config.getCommandBy(commandName);
@@ -55,7 +51,7 @@ public class VitotronicConfigController implements IVitotronicConfigController {
 			return null;
 		}
 		
-		return new Parameter(command.getAddress());
+		return null;
 	}
 
 }

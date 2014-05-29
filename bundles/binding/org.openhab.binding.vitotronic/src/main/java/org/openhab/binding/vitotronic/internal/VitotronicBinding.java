@@ -33,6 +33,7 @@ import java.util.concurrent.locks.*;
 
 import org.openhab.binding.vitotronic.*;
 import org.openhab.binding.vitotronic.internal.protocol.*;
+import org.openhab.binding.vitotronic.internal.protocol.P300.P300VitotronicProtocol;
 import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 import org.openhab.core.binding.AbstractActiveBinding;
 import org.openhab.core.library.types.*;
@@ -68,7 +69,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 		
 		if (!serialPortName.isEmpty())
 		{		
-			serialPortGateway = SerialPortGateway.create(TCPSerialPort.Create(serialPortName));
+			serialPortGateway = new SerialPortGateway(TCPSerialPort.Create(serialPortName));
 		}
 
 		String refresh = (String)config.get("refresh");
@@ -108,7 +109,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 			return;
 		}
 		
-		IVitotronicController controller = VitotronicController.Create(serialPortGateway, new ReceiveByteProcessorFactory());
+		IVitotronicController controller = createVitotronicController();
 		
 		if (controller == null) 
 		{
@@ -124,18 +125,25 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 		{			
 			Parameter parameter = config.getParameter();
 			
-			if (parameter instanceof IWriteableBooleanParameter && command instanceof OnOffType)
+			if (parameter instanceof IBooleanParameter && command instanceof OnOffType)
 			{
 				OnOffType boolCommand = (OnOffType)command;
 				
-				IWriteableBooleanParameter boolParameter = (IWriteableBooleanParameter)parameter;
-				boolParameter.set(boolCommand == OnOffType.ON);
+				IBooleanParameter boolParameter = (IBooleanParameter)parameter;
+				boolParameter.setValue(boolCommand == OnOffType.ON);
 				
 				controller.write(boolParameter);
 			}
 		}
 		
 		controllerLock.unlock();
+	}
+
+	private IVitotronicController createVitotronicController() {
+		IParameterFactory factory = null;
+		
+		IVitotronicController controller = new VitotronicController(new P300VitotronicProtocol(factory), serialPortGateway);
+		return controller;
 	}
 	
 	@Override
@@ -147,7 +155,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 			return;
 		}
 		
-		IVitotronicController controller = VitotronicController.Create(serialPortGateway, new ReceiveByteProcessorFactory());
+		IVitotronicController controller = createVitotronicController();
 		
 		if (controller == null) 
 		{
@@ -238,6 +246,5 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 	
 	@Override
 	public void deactivate() {
-		serialPortGateway.close();
 	}
 }

@@ -32,6 +32,6 @@ package org.openhab.binding.vitotronic.internal.protocol;
  * @author Robin Lenz
  * @since 1.0.0
  */
-public interface IIntegerParameter extends IParameter {
-	int getValue();
+public interface IIntegerParameter extends IParameterWithValue<Integer> {
+
 }

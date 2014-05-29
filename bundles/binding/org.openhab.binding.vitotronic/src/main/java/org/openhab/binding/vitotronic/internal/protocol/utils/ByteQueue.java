@@ -75,14 +75,22 @@ public class ByteQueue implements IByteQueue {
 	
 	@Override
 	public void enqueAll(IByteQueue otherByteQueue) {
-		if (otherByteQueue == null)
-		{
+		if (otherByteQueue == null) {
 			return;
 		}
 		
 		byte[] bytesFromOtherByteQueue = otherByteQueue.toByteArray();
 		
-		for (byte currentByte : bytesFromOtherByteQueue)
+		enqueAll(bytesFromOtherByteQueue);
+	}
+	
+	@Override
+	public void enqueAll(byte[] bytesToEnque) {
+		if (bytesToEnque == null) {
+			return;
+		}
+		
+		for (byte currentByte : bytesToEnque)
 		{
 			enque(currentByte);
 		}

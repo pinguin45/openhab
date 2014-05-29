@@ -47,5 +47,6 @@ public interface IVitotronicProtocol {
 
 	boolean isInitialized(IByteQueue byteQueue);
 	boolean isReseted(IByteQueue byteQueue);
-	IParameter parseReadParameterResponse(IByteQueue byteQueue);
+	<TParameterValue> IParameterWithValue<TParameterValue> parseReadParameterResponse(IByteQueue bytesToParse);
+	<TParameterValue> IParameterWithValue<TParameterValue> parseWriteParameterResponse(IByteQueue bytesToParse);
 }

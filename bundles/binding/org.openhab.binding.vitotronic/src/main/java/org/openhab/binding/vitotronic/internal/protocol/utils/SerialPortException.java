@@ -34,9 +34,8 @@ package org.openhab.binding.vitotronic.internal.protocol.utils;
  */
 public class SerialPortException extends Exception {
 
-	/**
-	 * @param arg0
-	 */
+	private static final long serialVersionUID = 4729266486452241456L;
+
 	public SerialPortException(String message) {
 		super(message);
 	}

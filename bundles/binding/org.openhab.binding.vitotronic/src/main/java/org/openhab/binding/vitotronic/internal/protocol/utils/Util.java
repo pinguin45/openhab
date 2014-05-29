@@ -28,12 +28,6 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol.utils;
 
-import java.util.List;
-
-import org.openhab.binding.vitotronic.internal.VitotronicBinding;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Utilmethods
  * @author Robin Lenz

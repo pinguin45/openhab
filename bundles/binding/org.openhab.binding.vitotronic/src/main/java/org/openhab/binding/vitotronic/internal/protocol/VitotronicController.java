@@ -28,6 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
+import org.openhab.binding.vitotronic.internal.protocol.utils.IByteQueue;
 import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPortGateway;
 
 /**
@@ -35,135 +36,76 @@ import org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPortGateway
  *
  */
 public class VitotronicController implements IVitotronicController {
-
+	private final static int MAX_INIT_RETRIES = 10;
+	
 	private ISerialPortGateway serialPortGateway;
-	private IReceiveByteProcessorFactory receiveByteProcessorFactory;
+	private IVitotronicProtocol vitotronicProtocol;
 	
-	/**
-	 * Constructor
-	 */
-	private VitotronicController(ISerialPortGateway serialPortGateway, IReceiveByteProcessorFactory receiveByteProcessorFactory) {
+	public VitotronicController(IVitotronicProtocol vitotronicProtocol, ISerialPortGateway serialPortGateway) {
+		this.vitotronicProtocol = vitotronicProtocol;
 		this.serialPortGateway = serialPortGateway;
-		this.receiveByteProcessorFactory = receiveByteProcessorFactory;
 	}
 	
-	/**
-	 * Creates a new instance.
-	 * @param serialPortGateway
-	 * @return new instance
-	 */
-	public static IVitotronicController Create(ISerialPortGateway serialPortGateway, IReceiveByteProcessorFactory receiveByteProcessorFactory) {
-		return new VitotronicController(serialPortGateway, receiveByteProcessorFactory);
-	}
-	
-	private <TParameter extends IParameter> TParameter read(TParameter parameter) {
-		Telegram<TParameter> frame = createReadTelegramWith(parameter);
-		
-		VitotronicParameterProcessor<TParameter> processor = receiveByteProcessorFactory.createVitotronicParameterProcessor();
-		serialPortGateway.send(frame, processor);
-				
-		return processor.getParameter();
-	}
-	
-	private <TParameter extends IParameter> Telegram<TParameter> createReadTelegramWith(TParameter parameter) {
-		Read<TParameter> command = new Read<TParameter>(parameter);
-			
-		return new Request<TParameter>(command);
-	}
-		
-	private <TParameter extends IWriteableParameter> Telegram<TParameter> createWriteTelegramWith(TParameter parameter) {
-		Write<TParameter> command = new Write<TParameter>(parameter);
-			
-		return new Request<TParameter>(command);
-	}
-		
-	/* 
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean init() {
-		AcknowledgementProcessor processor = receiveByteProcessorFactory.createAcknowledgementProcessor();
+		IByteQueue initRequestBytes = vitotronicProtocol.getByteQueueForInit();
+		int expectedInitResponseSize = vitotronicProtocol.expectedInitResponseSize();
 		
-		int counter = 0;
+		int retries = 0;
 		
-		while (counter < 10)
+		while (retries < MAX_INIT_RETRIES)
 		{		
-			serialPortGateway.send(new Init(), processor);
-			
-			if (processor.gotAcknowledgment())
+			if (tryInit(initRequestBytes, expectedInitResponseSize))
 			{
 				return true;
 			}
 			
-			counter++;
+			retries++;
 		}	
 		
 		return false;
 	}
 
-	/* 
-	 * {@inheritDoc}
-	 */
+	private boolean tryInit(IByteQueue initRequestBytes, int initResponseSize) {
+		IByteQueue initResponse = serialPortGateway.sendBytesAndWaitForResponse(initRequestBytes, initResponseSize);
+		
+		if (vitotronicProtocol.isInitialized(initResponse))
+		{
+			return true;
+		}
+		
+		return false;
+	}
+
 	@Override
 	public void reset() {
-		ResetProcessor processor = receiveByteProcessorFactory.createResetProcessor();
-		serialPortGateway.send(new Reset(), processor);
+		IByteQueue resetRequestBytes = vitotronicProtocol.getByteQueueForReset();
+		int expectedResponseSizeInBytes = vitotronicProtocol.expectedResetResponseSize();
+		
+		serialPortGateway.sendBytesAndWaitForResponse(resetRequestBytes, expectedResponseSizeInBytes);
 	}
+	
+	@Override
+	public <TParameterValue> TParameterValue readValueOf(IParameterWithValue<TParameterValue> parameter) {
+		IByteQueue readParameterBytes = vitotronicProtocol.getByteQueueForReadingParameter(parameter);
+		int expectedResponseSize = vitotronicProtocol.expectedReadingParameterResponseSize(parameter);
+		
+		IByteQueue readParameterResponseBytes = serialPortGateway.sendBytesAndWaitForResponse(readParameterBytes, expectedResponseSize);
+		
+		IParameterWithValue<TParameterValue> parameterWithValue = vitotronicProtocol.parseReadParameterResponse(readParameterResponseBytes);
+	
+		return parameterWithValue.getValue();
+	}	
 
 	@Override
-	public String readValueOf(IStringParameter parameter) {
-		parameter = read(parameter);
+	public <TParameterValue> TParameterValue write(IParameterWithValue<TParameterValue> parameter) {	
+		IByteQueue writeParameterBytes = vitotronicProtocol.getByteQueueForWritingParameter(parameter);
+		int expectedResponseSize = vitotronicProtocol.expectedWritingParameterResponseSize(parameter);
 		
-		if (parameter == null)
-		{
-			return "Fehler";
-		}
+		IByteQueue writeParameterResponseBytes = serialPortGateway.sendBytesAndWaitForResponse(writeParameterBytes, expectedResponseSize);
 		
-		return parameter.getValue();
+		IParameterWithValue<TParameterValue> parameterWithValue = vitotronicProtocol.parseWriteParameterResponse(writeParameterResponseBytes);
+	
+		return parameterWithValue.getValue();
 	}
-
-	@Override
-	public double readValueOf(IDecimalParameter parameter) {
-		parameter = read(parameter);
-		
-		if (parameter == null)
-		{
-			return 0;
-		}
-		
-		return parameter.getValue();
-	}
-
-	@Override
-	public int readValueOf(IIntegerParameter parameter) {
-		parameter = read(parameter);
-		
-		if (parameter == null)
-		{
-			return 0;
-		}
-		
-		return parameter.getValue();
-	}
-
-	@Override
-	public boolean readValueOf(IBooleanParameter parameter) {
-		parameter = read(parameter);
-		
-		if (parameter == null)
-		{
-			return false;
-		}
-		
-		return parameter.getValue();
-	}
-
-	@Override
-	public void write(IWriteableParameter parameter) {
-		Telegram<IWriteableParameter> frame = createWriteTelegramWith(parameter);
-		
-		AcknowledgementProcessor processor = receiveByteProcessorFactory.createAcknowledgementProcessor();
-		serialPortGateway.send(frame, processor);		
-	}
-
 }

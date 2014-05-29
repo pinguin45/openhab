@@ -33,7 +33,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import gnu.io.NRSerialPort;
-import gnu.io.SerialPort;
 
 /**
  * @author Robin Lenz
@@ -47,34 +46,22 @@ public class NRSerialPortAdapter implements ISerialPort {
 		serialPort = new NRSerialPort(serialPortName, 4800);
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort#open()
-	 */
 	@Override
 	public void open() throws SerialPortException {
 		serialPort.connect();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort#setParameter(int, int, int, int)
-	 */
 	@Override
 	public void setParameter(int baudrate, int databits, int stopbits,
 			int parity) throws SerialPortException {
 		//serialPort.connect(8, 2, 2);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort#isOpen()
-	 */
 	@Override
 	public boolean isOpen() {
 		return serialPort.isConnected();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort#readBytes()
-	 */
 	@Override
 	public byte[] readBytes() throws SerialPortException {
 		InputStream in =  serialPort.getInputStream();
@@ -89,9 +76,6 @@ public class NRSerialPortAdapter implements ISerialPort {
 		return readBytes(available);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort#readBytes(int)
-	 */
 	@Override
 	public byte[] readBytes(int count) throws SerialPortException {
 		InputStream in = serialPort.getInputStream();
@@ -107,9 +91,6 @@ public class NRSerialPortAdapter implements ISerialPort {
 		return bytes;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort#getAvailableBytesCount()
-	 */
 	@Override
 	public int getAvailableBytesCount() throws SerialPortException {
 		InputStream in = serialPort.getInputStream();
@@ -121,9 +102,6 @@ public class NRSerialPortAdapter implements ISerialPort {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort#writeBytes(byte[])
-	 */
 	@Override
 	public boolean writeBytes(byte[] bytes) throws SerialPortException {
 		OutputStream out = serialPort.getOutputStream();
@@ -137,14 +115,10 @@ public class NRSerialPortAdapter implements ISerialPort {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.openhab.binding.vitotronic.internal.protocol.utils.ISerialPort#close()
-	 */
 	@Override
 	public boolean close() throws SerialPortException {
 		serialPort.disconnect();
 		
 		return true;
 	}
-
 }

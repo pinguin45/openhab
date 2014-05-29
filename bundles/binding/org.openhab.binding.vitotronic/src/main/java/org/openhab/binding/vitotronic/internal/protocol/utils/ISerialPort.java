@@ -90,4 +90,5 @@ public interface ISerialPort {
 	 * @throws SerialPortException
 	 */
 	boolean close() throws SerialPortException;
+
 }

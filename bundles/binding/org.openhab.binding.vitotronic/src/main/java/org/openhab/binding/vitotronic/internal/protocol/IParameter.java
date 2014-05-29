@@ -35,21 +35,9 @@ import org.openhab.binding.vitotronic.internal.protocol.utils.*;
  * @since 1.0.0
  */
 public interface IParameter {
-	int addressSize();
-	int dataSize();
+	int getAddressSize();
+	int getDataSize();
 		
-	/**
-	 * @return this bytes of parameter
-	 */
 	IByteQueue getByteQueue();
-	
-	/**
-	 * 
-	 * @param bytes
-	 */
-	void parse(IByteQueue byteQueue);
-	/**
-	 * @param dataBytes
-	 */
 	void parseDataBytes(byte[] dataBytes);
 }

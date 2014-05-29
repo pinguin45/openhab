@@ -37,6 +37,7 @@ public interface IByteQueue {
 	int size();
 	void enque(byte item);
 	void enque(int item);
+	void enqueAll(byte[] bytesToEnque);
 	void enqueAll(IByteQueue otherByteQueue);	
 	byte deque();
 	byte[] toByteArray();

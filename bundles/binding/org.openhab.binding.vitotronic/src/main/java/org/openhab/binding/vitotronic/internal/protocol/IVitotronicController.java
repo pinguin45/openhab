@@ -35,39 +35,8 @@ package org.openhab.binding.vitotronic.internal.protocol;
  */
 public interface IVitotronicController {
 	
-	/**
-	 * Resets the communication to Vitotronic
-	 */
 	void reset();
-	
-	/**
-	 * Initializes the communication to Vitotronic
-	 * @return 
-	 */
 	boolean init();
-	
-	/**
-	 * @return the value of the parameter
-	 */
-	String readValueOf(IStringParameter parameter);
-	
-	/**
-	 * @return the value of the DecimalParameter
-	 */
-	double readValueOf(IDecimalParameter parameter);
-	
-	/**
-	 * @return the value of the IntegerParameter
-	 */
-	int readValueOf(IIntegerParameter parameter);
-	
-	/**
-	 * @return the value of the BooleanParameter
-	 */
-	boolean readValueOf(IBooleanParameter parameter);
-	
-	/**
-	 * @param parameter
-	 */
-	void write(IWriteableParameter parameter);
+	<TParameterValue> TParameterValue readValueOf(IParameterWithValue<TParameterValue> parameter);
+	<TParameterValue> TParameterValue write(IParameterWithValue<TParameterValue> parameter);
 }

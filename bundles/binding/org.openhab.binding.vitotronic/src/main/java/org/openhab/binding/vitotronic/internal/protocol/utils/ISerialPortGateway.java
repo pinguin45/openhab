@@ -34,22 +34,5 @@ package org.openhab.binding.vitotronic.internal.protocol.utils;
  *
  */
 public interface ISerialPortGateway {
-	/**
-	 * Sends the frame to SerialPort and processes the answer 
-	 * @param frame
-	 * @param receivedByteProcessor
-	 * @return 
-	 */
-	public void send(IByteProtocolFrame frame, IReceiveByteProcessor receivedByteProcessor);
-
-	/**
-	 * Schliesst die serielle Schnittstelle
-	 */
-	public void close();
-
-	/**
-	 * True wenn die serielle Schnittstelle verbunden ist.
-	 * @return connectionState
-	 */
-	public boolean isConnected();
+	public IByteQueue sendBytesAndWaitForResponse(IByteQueue bytesToWrite, int expectedResponseSizeInBytes);
 }

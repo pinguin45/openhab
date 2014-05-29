@@ -46,10 +46,6 @@ public class VitotronicBindingConfig implements BindingConfig {
 	private Parameter parameter;
 	private String itemName;
 
-	/**
-	 * Konstruktor
-	 * @param config
-	 */
 	public VitotronicBindingConfig(String itemName, String config) {
 		this.itemName = itemName;
 		parse(config);

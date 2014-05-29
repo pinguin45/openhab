@@ -28,9 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-/**
- * @author Robin Lenz
- * @since 1.0.0
- */
-public interface IBooleanParameter extends IParameterWithValue<Boolean> {
+public interface IParameterWithValue<TValue> extends IParameter{
+	TValue getValue();
+	void setValue(TValue value);
 }

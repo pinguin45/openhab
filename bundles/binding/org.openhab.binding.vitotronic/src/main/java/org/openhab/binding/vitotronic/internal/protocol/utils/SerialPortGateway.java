@@ -40,72 +40,68 @@ public class SerialPortGateway implements ISerialPortGateway {
 	private static Logger logger = LoggerFactory.getLogger(SerialPortGateway.class);
 	private ISerialPort serialPort;
 	
-	private SerialPortGateway(ISerialPort serialPort) {
+	public SerialPortGateway(ISerialPort serialPort) {
 		this.serialPort = serialPort;
 	}
 
-	private void connect() {
+	@Override
+	public IByteQueue sendBytesAndWaitForResponse(IByteQueue bytesToWrite, int expectedResponseSizeInBytes) {
+		sendBytes(bytesToWrite);
+		
+		return waitForResponse(expectedResponseSizeInBytes);
+	}
+
+	private void sendBytes(IByteQueue bytesToWrite) {
 		try {
-			logger.error("Try to open SerialPort");
-			this.serialPort.open();
-			logger.error("SerialPort opened.");
-			this.serialPort.setParameter(4800, 8, 2, 2);
-			logger.error("Parameter configured");
+			serialPort.writeBytes(bytesToWrite.toByteArray());
 		} catch (SerialPortException e) {
-			logger.error("Failed to open serialport: " + e.getMessage());
-		}
-	}
-	
-	public static ISerialPortGateway create(ISerialPort serialPort) {
-		return new SerialPortGateway(serialPort);
-	}
-
-	@Override
-	public void send(IByteProtocolFrame frame, IReceiveByteProcessor receivedByteProcessor) {
-		try
-		{			
-			if (!serialPort.isOpen())
-			{
-				logger.error("Port is not open. Reconnect");
-				connect();
-			}
-			
-			IByteQueue byteQueue = frame.getByteQueue();
-			
-			byte[] paket = byteQueue.toByteArray();
-			
-			serialPort.readBytes();
-			boolean bytesWritten = serialPort.writeBytes(paket);
-			
-			if (!bytesWritten)
-			{
-				return;
-			}
-			
-			try {
-				receivedByteProcessor.process(SerialPortByteProvider.Create(serialPort));
-				
-			} catch (Exception e) {
-				logger.error("Error while processing: " + e.getMessage());
-			}
-						
-		} catch (SerialPortException e)
-		{			
-			logger.error("Fehler in write methode: ", e);
+			logger.error("Error while writing bytes: %s", e.getMessage());
 		}
 	}
 
-	@Override
-	public void close() {
+	private IByteQueue waitForResponse(int expectedResponseSizeInBytes) {
+		IByteQueue responseBytes = new ByteQueue();
+		
+		int countOfMissingBytes = expectedResponseSizeInBytes;
+		
+		while (countOfMissingBytes > 0) {	
+			byte[] readBytes = readBytes(countOfMissingBytes);
+			
+			responseBytes.enqueAll(readBytes);
+			
+			countOfMissingBytes = expectedResponseSizeInBytes - responseBytes.size();
+		}
+		
+		return responseBytes;
+	}
+
+	private byte[] readBytes(int bytesToRead) {
 		try {
-			serialPort.close();
+			return serialPort.readBytes(getCountOfBytesToRead(bytesToRead));
 		} catch (SerialPortException e) {
-			logger.error("Failed to close serialport");
+			logger.error("Error while reading bytes (Count: %d): %s", bytesToRead, e.getMessage());
+		}
+		
+		return new byte[0];
+	}
+
+	private int getCountOfBytesToRead(int countOfMissingBytes) {
+		int availableBytesCount = getAvailableBytesCount();
+		
+		if (availableBytesCount > countOfMissingBytes) {
+			return countOfMissingBytes;
+		} else {
+			return availableBytesCount;
 		}
 	}
 
-	@Override
-	public boolean isConnected() {
-		return serialPort.isOpen();
+	private int getAvailableBytesCount() {
+		try {
+			return serialPort.getAvailableBytesCount();
+		} catch (SerialPortException e) {
+			logger.error("Error getting available byte count: %s", e.getMessage());
+		}
+		
+		return 0;
 	}
 }

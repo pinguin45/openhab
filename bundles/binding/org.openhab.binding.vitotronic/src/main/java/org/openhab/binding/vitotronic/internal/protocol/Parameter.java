@@ -28,10 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.openhab.binding.vitotronic.internal.protocol.utils.Convert;
+import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 
 /**
  * Baseclass for Parameters
@@ -40,133 +37,37 @@ import org.openhab.binding.vitotronic.internal.protocol.utils.Convert;
  */
 public abstract class Parameter implements IParameter {
 	
-	private List<Byte> values;
+	private byte[] dataBytes;
 	
 	private int address;
+	private int addressSize;
+	private int dataSize;
 	
-	/**
-	 * Constructor
-	 */
-	public Parameter(int address) {
-		this.values = new ArrayList<Byte>();
-		this.address = address;		
+	public Parameter(int address, int addressSize, int dataSize) {
+		this.dataBytes = new byte[0];
+		this.address = address;	
+		this.addressSize = addressSize;
+		this.dataSize = dataSize;
 	}
 	
-	/**
-	 * @return this bytes of parameter
-	 */
-	public List<Byte> getBytes() {
-		List<Byte> result = new ArrayList<Byte>();
+	public int getAddressSize() {
+		return addressSize;
+	}
+	
+	public int getDataSize() {
+		return dataSize;
+	}
+	
+	public IByteQueue getByteQueue() {
+		IByteQueue result = new ByteQueue();
 		
-		result.add(Convert.toHighByte(getAddress()));
-		result.add(Convert.toByte(getAddress()));
-		result.add(getExpectedValueSize());
+		result.enque(Convert.toHighByte(address));
+		result.enque(Convert.toByte(address));
+		result.enque(getDataSize());
 		
-		if (values.size() > 0)
+		if (dataBytes.length > 0)
 		{
-			result.addAll(values);
-		}
-		
-		return result;
-	}
-	
-	/**
-	 * 
-	 * @param bytes
-	 */
-	public void parse(List<Byte> bytes) {
-		
-		int valueSize = bytes.get(0);
-				
-		if (valueSize > 0)
-		{
-			values.addAll(bytes.subList(1, valueSize + 1));
-		}
-	}
-	
-	/**
-	 * Inserts the values at the index position
-	 * @param index to put values
-	 * @param value to insert
-	 */
-	protected void insertValueAt(int index, byte value) {
-				
-		if (index < values.size())
-		{
-			values.set(index, value);
-		}
-		else
-		{
-			values.clear();
-			values.add(index, value);
-		}		
-	}
-	
-	protected byte getValueFrom(int index) {
-		return values.get(index);
-	}
-	
-	protected void setValueTo(int index, byte value) {
-		
-		insertValueAt(index, value);
-	}
-	
-	protected int getIntegerValueFrom(int index) {
-		String countAsString = String.format("%02x", getValueFrom(index));
-		
-		return Integer.parseInt(countAsString, 16);
-	}
-	
-	/**
-	 * @return the address of Parameter
-	 */
-	protected int getAddress() {
-		return address;
-	}
-	
-	/**
-	 * @return the integer of 4 bytes
-	 */
-	protected int getInteger() {
-		String countAsString = String.format("%02x%02x%02x%02x", getValueFrom(3), getValueFrom(2), getValueFrom(1), getValueFrom(0));
-		
-		return Integer.parseInt(countAsString, 16);
-	}
-	
-	/**
-	 * @return the integer of 2 bytes
-	 */
-	protected int getShortInteger() {
-		String countAsString = String.format("%02x%02x", getValueFrom(1), getValueFrom(0));
-		
-		return Integer.parseInt(countAsString, 16);
-	}
-	
-	/**
-	 * @return the integer of a byte
-	 */
-	protected int getByteInteger() {
-		String countAsString = String.format("%02x", getValueFrom(0));
-		
-		return Integer.parseInt(countAsString, 16);
-	}
-	
-	/**
-	 * @return expected length of values 
-	 */
-	protected abstract byte getExpectedValueSize();
-	
-	/**
-	 * @return the value as String
-	 */
-	public String getValueString() {
-		String result = "";
-		
-		int expectedSize = getExpectedValueSize();
-		
-		for (int pos = expectedSize - 1; pos >=0; pos--)
-		{
-			result = result + String.format("%02x", getValueFrom(pos));
+			result.enqueAll(dataBytes);
 		}
 		
 		return result;

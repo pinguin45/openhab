@@ -32,9 +32,5 @@ package org.openhab.binding.vitotronic.internal.protocol;
  * @author Robin Lenz
  * @since 1.0.0
  */
-public interface IDecimalParameter extends IParameter {
-	/**
-	 * @return the Decimal Value of Parameter
-	 */
-	double getValue();
+public interface IDecimalParameter extends IParameterWithValue<Double> {
 }

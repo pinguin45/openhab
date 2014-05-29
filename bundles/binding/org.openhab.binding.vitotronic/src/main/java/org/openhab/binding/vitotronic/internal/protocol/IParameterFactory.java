@@ -33,5 +33,5 @@ package org.openhab.binding.vitotronic.internal.protocol;
  * @since 1.0.0
  */
 public interface IParameterFactory {
-	IParameter createParameterFor(int address);
+	<TParameterValue> IParameterWithValue<TParameterValue> createParameterFor(int address);
 }

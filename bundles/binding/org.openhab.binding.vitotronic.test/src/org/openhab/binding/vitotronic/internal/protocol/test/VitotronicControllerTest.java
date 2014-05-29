@@ -32,9 +32,9 @@
 import static org.junit.Assert.*;
 
 import org.junit.*;
-import org.mockito.*;
 import org.openhab.binding.vitotronic.internal.protocol.*;
 import org.openhab.binding.vitotronic.internal.protocol.utils.*;
+
 import static org.mockito.Mockito.*;
 
 /**
@@ -56,179 +56,131 @@ public class VitotronicControllerTest {
 	@After
 	public void tearDown() throws Exception {
 	}
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#init()}.
-	 */
+	
 	@Test
 	public void testInit() {
+		IByteQueue initRequestByteQueue = mock(IByteQueue.class);
+		IByteQueue initResponseByteQueue = mock(IByteQueue.class);
+		IVitotronicProtocol protocol = mock(IVitotronicProtocol.class);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		AcknowledgementProcessor processor = mock(AcknowledgementProcessor.class);
-		when(factory.createAcknowledgementProcessor()).thenReturn(processor);
-		when(processor.gotAcknowledgment()).thenReturn(true);
+
+		when(protocol.expectedInitResponseSize()).thenReturn(1);
+		when(protocol.getByteQueueForInit()).thenReturn(initRequestByteQueue);
+		when(gateway.sendBytesAndWaitForResponse(initRequestByteQueue, 1)).thenReturn(initResponseByteQueue);
+		when(protocol.isInitialized(initResponseByteQueue)).thenReturn(true);
 		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);
+		IVitotronicController testObject = new VitotronicController(protocol, gateway);
+		boolean isInitialized = testObject.init();
 		
-		controller.init();
-		
-		verify(gateway).send(isA(Init.class),eq(processor));
+		assertTrue(isInitialized);
+		verify(protocol).expectedInitResponseSize();
+		verify(protocol).getByteQueueForInit();
+		verify(gateway).sendBytesAndWaitForResponse(initRequestByteQueue, 1);
+		verify(protocol).isInitialized(initResponseByteQueue);
 	}
 	
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#init()}.
-	 */
 	@Test
 	public void testInitWithRetry() {
+		IByteQueue initRequestByteQueue = mock(IByteQueue.class);
+		IByteQueue initResponseByteQueue = mock(IByteQueue.class);
+		IVitotronicProtocol protocol = mock(IVitotronicProtocol.class);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		AcknowledgementProcessor processor = mock(AcknowledgementProcessor.class);
-		when(factory.createAcknowledgementProcessor()).thenReturn(processor);
-		when(processor.gotAcknowledgment()).thenReturn(false, true);
+
+		when(protocol.expectedInitResponseSize()).thenReturn(1);
+		when(protocol.getByteQueueForInit()).thenReturn(initRequestByteQueue);
+		when(gateway.sendBytesAndWaitForResponse(initRequestByteQueue, 1)).thenReturn(initResponseByteQueue);
+		when(protocol.isInitialized(initResponseByteQueue)).thenReturn(false, true);
 		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);
+		IVitotronicController testObject = new VitotronicController(protocol, gateway);
+		boolean isInitialized = testObject.init();
 		
-		controller.init();
+		assertTrue(isInitialized);
+		verify(protocol).expectedInitResponseSize();
+		verify(protocol).getByteQueueForInit();
+		verify(gateway, times(2)).sendBytesAndWaitForResponse(initRequestByteQueue, 1);
+		verify(protocol, times(2)).isInitialized(initResponseByteQueue);
+	}
+	
+	@Test
+	public void testInitWithMaxRetryExceeded() {
+		IByteQueue initRequestByteQueue = mock(IByteQueue.class);
+		IByteQueue initResponseByteQueue = mock(IByteQueue.class);
+		IVitotronicProtocol protocol = mock(IVitotronicProtocol.class);
+		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
+
+		when(protocol.expectedInitResponseSize()).thenReturn(1);
+		when(protocol.getByteQueueForInit()).thenReturn(initRequestByteQueue);
+		when(gateway.sendBytesAndWaitForResponse(initRequestByteQueue, 1)).thenReturn(initResponseByteQueue);
+		when(protocol.isInitialized(initResponseByteQueue)).thenReturn(false, false, false, false, false, false, false, false, false, false);
 		
-		verify(gateway, times(2)).send(isA(Init.class),eq(processor));
+		IVitotronicController testObject = new VitotronicController(protocol, gateway);
+		boolean isInitialized = testObject.init();
+		
+		assertFalse(isInitialized);
+		verify(protocol).expectedInitResponseSize();
+		verify(protocol).getByteQueueForInit();
+		verify(gateway, times(10)).sendBytesAndWaitForResponse(initRequestByteQueue, 1);
+		verify(protocol, times(10)).isInitialized(initResponseByteQueue);
 	}
 
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#reset()}.
-	 */
 	@Test
 	public void testReset() {
+		IByteQueue resetRequestBytes = mock(IByteQueue.class);
+		IVitotronicProtocol vitotronicProtocol = mock(IVitotronicProtocol.class);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		ResetProcessor processor = mock(ResetProcessor.class);
-		when(factory.createResetProcessor()).thenReturn(processor);
 		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);
+		when(vitotronicProtocol.getByteQueueForReset()).thenReturn(resetRequestBytes);
+		when(vitotronicProtocol.expectedResetResponseSize()).thenReturn(2);
 		
-		controller.reset();
+		IVitotronicController testObject =  new VitotronicController(vitotronicProtocol, gateway);		
+		testObject.reset();
 		
-		verify(gateway).send(isA(Reset.class),eq(processor));
+		verify(gateway).sendBytesAndWaitForResponse(resetRequestBytes, 2);
 	}
-
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.parameters.Parameter)}.
-	 */
+	
 	@Test
 	public void testReadValueOf() {
-
 		String expectedParameterValue = "testValue";
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<IStringParameter> processor = mock(VitotronicParameterProcessor.class);
 		IStringParameter inputParameter = mock(IStringParameter.class);
 		IStringParameter outputParameter = mock(IStringParameter.class);
+		IByteQueue readParameterRequestBytes = mock(IByteQueue.class);
+		IByteQueue readParameterResponseBytes = mock(IByteQueue.class);
+		IVitotronicProtocol protocol = mock(IVitotronicProtocol.class);
 		
-		when(factory.<IStringParameter>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(outputParameter);
+		when(protocol.getByteQueueForReadingParameter(inputParameter)).thenReturn(readParameterRequestBytes);
+		when(protocol.expectedReadingParameterResponseSize(inputParameter)).thenReturn(8);
+		when(gateway.sendBytesAndWaitForResponse(readParameterRequestBytes, 8)).thenReturn(readParameterResponseBytes);
+		when(protocol.<String>parseReadParameterResponse(readParameterResponseBytes)).thenReturn(outputParameter);
 		when(outputParameter.getValue()).thenReturn(expectedParameterValue);
 		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		String found = controller.readValueOf(inputParameter);
+		IVitotronicController controller = new VitotronicController(protocol, gateway);		
+		String readParamerterValue = controller.readValueOf(inputParameter);
 		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
 		verify(outputParameter).getValue();
-		assertEquals(expectedParameterValue, found);
+		assertEquals(expectedParameterValue, readParamerterValue);
 	}
 
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.parameters.Parameter)}.
-	 */
-	@Test
-	public void testReadDecimalOf() {
-
-		double expectedParameterValue = 22.5;;
-		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<IDecimalParameter> processor = mock(VitotronicParameterProcessor.class);
-		IDecimalParameter inputParameter = mock(IDecimalParameter.class);
-		IDecimalParameter outputParameter = mock(IDecimalParameter.class);
-		
-		when(factory.<IDecimalParameter>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(outputParameter);
-		when(outputParameter.getValue()).thenReturn(expectedParameterValue);
-		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		double found = controller.readValueOf(inputParameter);
-		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
-		verify(outputParameter).getValue();
-		assertEquals(expectedParameterValue, found, 0);
-	}
-	
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#readValueOf(org.openhab.binding.vitotronic.internal.protocol.parameters.Parameter)}.
-	 */
-	@Test
-	public void testReadIntegerOf() {
-
-		int expectedParameterValue = 22;;
-		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		VitotronicParameterProcessor<IIntegerParameter> processor = mock(VitotronicParameterProcessor.class);
-		IIntegerParameter inputParameter = mock(IIntegerParameter.class);
-		IIntegerParameter outputParameter = mock(IIntegerParameter.class);
-		
-		when(factory.<IIntegerParameter>createVitotronicParameterProcessor()).thenReturn(processor);
-		when(processor.getParameter()).thenReturn(outputParameter);
-		when(outputParameter.getValue()).thenReturn(expectedParameterValue);
-		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		int found = controller.readValueOf(inputParameter);
-		
-		verify(gateway).send(isA(Request.class),eq(processor));
-		verify(processor).getParameter();
-		verify(outputParameter).getValue();
-		assertEquals(expectedParameterValue, found, 0);
-	}
-	/**
-	 * Test method for {@link org.openhab.binding.vitotronic.internal.protocol.VitotronicController#write(org.openhab.binding.vitotronic.internal.protocol.parameters.Parameter)}.
-	 */
 	@Test
 	public void testWrite() {
+		String expectedParameterValue = "testValue";
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
-		IReceiveByteProcessorFactory factory = mock(IReceiveByteProcessorFactory.class);
-		AcknowledgementProcessor processor = mock(AcknowledgementProcessor.class);
-		IWriteableParameter inputParameter = mock(IWriteableParameter.class);
+		IStringParameter parameterForRequest = mock(IStringParameter.class);
+		IStringParameter parameterInResponse = mock(IStringParameter.class);
+		IByteQueue writeParameterRequestBytes = mock(IByteQueue.class);
+		IByteQueue writeParameterResponseBytes = mock(IByteQueue.class);
+		IVitotronicProtocol protocol = mock(IVitotronicProtocol.class);
 		
-		when(factory.createAcknowledgementProcessor()).thenReturn(processor);
+		when(protocol.getByteQueueForWritingParameter(parameterForRequest)).thenReturn(writeParameterRequestBytes);
+		when(protocol.expectedWritingParameterResponseSize(parameterForRequest)).thenReturn(8);
+		when(gateway.sendBytesAndWaitForResponse(writeParameterRequestBytes, 8)).thenReturn(writeParameterResponseBytes);
+		when(protocol.<String>parseWriteParameterResponse(writeParameterResponseBytes)).thenReturn(parameterInResponse);
+		when(parameterInResponse.getValue()).thenReturn(expectedParameterValue);
 		
-		IVitotronicController controller = VitotronicController.Create(gateway, factory);		
-		controller.write(inputParameter);
+		IVitotronicController controller = new VitotronicController(protocol, gateway);		
+		String writtenParameterValue = controller.write(parameterForRequest);
 		
-		verify(gateway).send(argThat(new IsWriteRequestWith(inputParameter)),eq(processor));
-	}
-	
-	class IsWriteRequestWith extends ArgumentMatcher<Request<IWriteableParameter>> {
-		
-		private IWriteableParameter parameter;
-		
-		public IsWriteRequestWith(IWriteableParameter parameter) {
-			this.parameter = parameter;
-		}
-
-		@Override
-		public boolean matches(Object argument) {
-			if (!(argument instanceof Request<?>))
-			{
-				return false;
-			}
-			
-			Request<IWriteableParameter> request = (Request<IWriteableParameter>) argument;
-			
-			Command<IWriteableParameter> command = request.getCommand();
-			
-			if (!(command instanceof Write<?>)) 
-			{
-				return false;
-			}
-			
-			return request.getParameter().equals(parameter);
-		}
+		assertEquals(expectedParameterValue, writtenParameterValue);
+		verify(gateway).sendBytesAndWaitForResponse(writeParameterRequestBytes, 8);
 	}
 }

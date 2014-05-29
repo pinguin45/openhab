@@ -32,11 +32,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.util.StringTokenizer;
 
-import org.openhab.binding.vitotronic.internal.VitotronicBinding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,9 +136,6 @@ public class TCPSerialPort implements ISerialPort {
 				DataInputStream in = new DataInputStream(socket.getInputStream());
 				
 				in.read(bytes);
-				
-				logger.error("Read Bytes:");
-				Util.printBytes(bytes);
 			}
 		} catch (IOException e) {
 			logger.error("Error while reading byte: ", e);
@@ -193,9 +188,6 @@ public class TCPSerialPort implements ISerialPort {
 	 */
 	@Override
 	public boolean writeBytes(byte[] bytes) throws SerialPortException {
-
-		logger.error("Write Bytes:");
-		Util.printBytes(bytes);
 		try {
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 			

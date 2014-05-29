@@ -32,6 +32,5 @@ package org.openhab.binding.vitotronic.internal.protocol;
  * @author Robin Lenz
  * @since 1.0.0
  */
-public interface IStringParameter extends IParameter {
-	String getValue();
+public interface IStringParameter extends IParameterWithValue<String> {
 }
