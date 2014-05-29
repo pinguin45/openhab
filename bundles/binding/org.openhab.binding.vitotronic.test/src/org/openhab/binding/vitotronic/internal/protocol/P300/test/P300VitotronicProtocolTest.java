@@ -1,4 +1,4 @@
-package org.openhab.binding.vitotronic.internal.protocol.KW2.test;
+package org.openhab.binding.vitotronic.internal.protocol.P300.test;
 
 import static org.junit.Assert.*;
 
