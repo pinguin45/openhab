@@ -26,49 +26,30 @@
  * (EPL), the licensors of this Program grant you additional permission
  * to convey the resulting work.
  */
-package org.openhab.binding.vitotronic.internal.config;
+package org.openhab.binding.vitotronic.internal.protocol;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.bind.annotation.*;
+import org.openhab.binding.vitotronic.internal.protocol.utils.Convert;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
-@XmlRootElement(name = "vito")
-@XmlAccessorType(XmlAccessType.FIELD)
-public class VitotronicConfig {
+public class TemperatureTransformer implements IValueTransformer<Double> {
 
-	@XmlElementWrapper(name = "devices")
-	@XmlElement(name = "device")
-    private List<Device> devices;
-	
-	@XmlElementWrapper(name = "commands")
-	@XmlElement(name = "command")
-    private List<Command> commands;
+	@Override
+	public Double transformFromBytes(byte[] bytes) {
+		String valueAsHexString = String.format("%02x%02x", bytes[1], bytes[0]);
+		
+		int valueAsInteger = Integer.parseInt(valueAsHexString, 16);
+		
+		return valueAsInteger / 10.0;
+	}
 
-	public VitotronicConfig() {
-		devices = new ArrayList<Device>();
-		commands = new ArrayList<Command>();
-	}
-	
-	public void addDevice(Device device) {
-		devices.add(device);
-	}
-	
-	public void addCommand(Command command) {
-		commands.add(command);
-	}
+	@Override
+	public byte[] transformToBytes(Double value) {
+		int valueAsInteger = (int) (value * 10);
 		
-	public Command getCommandByAddress(int address) {
-		for (Command command : commands) {
-			if (command.getAddress() == address) {
-				return command;
-			}
-		}
-		
-		return null;
+		return new byte[] { Convert.toLowByte(valueAsInteger), Convert.toHighByte(valueAsInteger)};
 	}
+
 }

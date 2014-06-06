@@ -1,5 +1,5 @@
 /**
- * openHAB, the open Home Automation Bus.
+y * openHAB, the open Home Automation Bus.
  * Copyright (C) 2010-2012, openHAB.org <admin@openhab.org>
  *
  * See the contributors.txt file in the distribution for a
@@ -38,14 +38,20 @@ import javax.xml.bind.Unmarshaller;
  * @author Robin Lenz
  * @since 1.0.0
  */
-public class ConfigDeserializer {
+public class ConfigDeserializer<TConfig> {
+	
+	private Class<TConfig> classOfTConfig;
+	
+	public ConfigDeserializer(Class<TConfig> classOfTConfig) {
+		this.classOfTConfig = classOfTConfig;
+	}
 
-	public VitotronicConfig parseConfig(String fileName) {
+	@SuppressWarnings("unchecked")
+	public TConfig parseConfig(InputStream inputStreamWithConfigXml) {
         try {
-            JAXBContext context = JAXBContext.newInstance(VitotronicConfig.class);
+            JAXBContext context = JAXBContext.newInstance(classOfTConfig);
             Unmarshaller unmarshaller = context.createUnmarshaller();
-            InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
-            VitotronicConfig configuredDevice = (VitotronicConfig) unmarshaller.unmarshal(stream);
+            TConfig configuredDevice = (TConfig) unmarshaller.unmarshal(inputStreamWithConfigXml);
             return configuredDevice;
         } catch (JAXBException e) {
             throw new RuntimeException(e);

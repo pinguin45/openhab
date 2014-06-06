@@ -41,7 +41,7 @@ public class Convert {
 	 * @param value int to convert
 	 * @return byte representation of value
 	 */
-	public static byte toByte(int value) {
+	public static byte toLowByte(int value) {
 		return (byte) ((value & 0xFF));
 	}
 	

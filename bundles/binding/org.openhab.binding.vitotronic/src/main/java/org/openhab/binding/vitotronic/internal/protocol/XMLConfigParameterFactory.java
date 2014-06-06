@@ -26,32 +26,51 @@
  * (EPL), the licensors of this Program grant you additional permission
  * to convey the resulting work.
  */
-package org.openhab.binding.vitotronic.internal.config;
+package org.openhab.binding.vitotronic.internal.protocol;
 
-import org.openhab.binding.vitotronic.internal.protocol.*;
+import java.util.*;
+
+import org.openhab.binding.vitotronic.internal.config.*;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
-public class VitotronicConfigController implements IVitotronicConfigController {
+public class XMLConfigParameterFactory implements IParameterFactory {
 
-	private VitotronicConfig config;
+	private final VitotronicConfig vitotronicConfig;
+	private final VitotronicControlConfig vitotronicControlConfig;
 	
-	public VitotronicConfigController(VitotronicConfig config) {
-		this.config = config;
+	private final Map<String, Class<?>> dataTypeMapping = new HashMap<String, Class<?>>() {{
+		  put( "short", Double.class);
+		}}; 
+	
+	public XMLConfigParameterFactory(VitotronicConfig vitotronicConfig, VitotronicControlConfig vitotronicControlConfig)
+	{
+		this.vitotronicConfig = vitotronicConfig;
+		this.vitotronicControlConfig = vitotronicControlConfig;
 	}
 	
+	
 	@Override
-	public IParameter getParameterFor(String commandName) {
-		Command command = config.getCommandBy(commandName);
+	public <TParameterValue> IParameterWithValue<TParameterValue> createParameterFor(int address) {
+		Command command = getCommandForAddress(address);
+		
+		return createParameterForCommand(command);
+	}
+
+
+	private Command getCommandForAddress(int address) {
+		Command command = vitotronicConfig.getCommandByAddress(address);
 		
 		if (command == null)
-		{
-			return null;
-		}
+			throw new RuntimeException(String.format("No parameter found with address: '%04X'", address));
 		
-		return null;
+		return command;
+	}
+	
+	private <TParameterValue> IParameterWithValue<TParameterValue> createParameterForCommand(Command command) {
+		
 	}
 
 }

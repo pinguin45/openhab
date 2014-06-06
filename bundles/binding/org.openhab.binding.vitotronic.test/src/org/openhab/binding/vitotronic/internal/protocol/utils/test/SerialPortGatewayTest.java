@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
  * @author Robin Lenz
  * @since 1.0.0
  */
-public class SerialPortGatwayTest {
+public class SerialPortGatewayTest {
 
 	@Before
 	public void setUp() throws Exception {
@@ -95,5 +95,19 @@ public class SerialPortGatwayTest {
 		
 		verify(serialPort).writeBytes(requestBytes.toByteArray());
 		assertArrayEquals(expectedResponseBytes.toByteArray(), foundResponseBytes.toByteArray());
+	}
+	
+	@Test(expected = WaitForResponseTimedoutException.class, timeout = 2000)
+	public void testSendBytesAndWaitForResponse_WithTimeout() throws Exception {
+		IByteQueue requestBytes = To.ByteQueue("01 02 03 04 05");
+		ISerialPort serialPort = mock(ISerialPort.class);
+		
+		when(serialPort.getAvailableBytesCount()).thenReturn(0);
+		when(serialPort.readBytes(0)).thenReturn(new byte[0]);
+		
+		ISerialPortGateway testObject = new SerialPortGateway(serialPort);
+		testObject.sendBytesAndWaitForResponse(requestBytes, 6);
+		
+		verify(serialPort).writeBytes(requestBytes.toByteArray());
 	}
 }

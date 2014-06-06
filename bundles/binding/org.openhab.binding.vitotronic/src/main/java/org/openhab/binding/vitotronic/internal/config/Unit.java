@@ -28,47 +28,52 @@
  */
 package org.openhab.binding.vitotronic.internal.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.xml.bind.annotation.*;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
-@XmlRootElement(name = "vito")
+@XmlRootElement(name = "Unit")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class VitotronicConfig {
-
-	@XmlElementWrapper(name = "devices")
-	@XmlElement(name = "device")
-    private List<Device> devices;
+public class Unit {
+	@XmlAttribute
+	private String name;
 	
-	@XmlElementWrapper(name = "commands")
-	@XmlElement(name = "command")
-    private List<Command> commands;
-
-	public VitotronicConfig() {
-		devices = new ArrayList<Device>();
-		commands = new ArrayList<Command>();
+	@XmlElement(name = "abbrev")
+	private String shortcut;
+	
+	@XmlElement
+	private String type;
+	
+	@XmlElement
+	private String entity;
+	
+	@XmlElement(name = "calc")
+	private Calculate formulas;
+	
+	public String getShortcut() {
+		return shortcut;
 	}
 	
-	public void addDevice(Device device) {
-		devices.add(device);
-	}
-	
-	public void addCommand(Command command) {
-		commands.add(command);
-	}
+	public String getType() {
+		if (type == null) 
+			return "";
 		
-	public Command getCommandByAddress(int address) {
-		for (Command command : commands) {
-			if (command.getAddress() == address) {
-				return command;
-			}
-		}
+		return type;
+	}
+
+	public String getInputFormula() {
+		if (formulas == null)
+			return "";
 		
-		return null;
+		return formulas.getInputFormula();
+	}
+
+	public String getOutputFormula() {
+		if (formulas == null)
+			return "";
+		
+		return formulas.getOutputFormula();
 	}
 }

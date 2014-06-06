@@ -26,49 +26,13 @@
  * (EPL), the licensors of this Program grant you additional permission
  * to convey the resulting work.
  */
-package org.openhab.binding.vitotronic.internal.config;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.bind.annotation.*;
+package org.openhab.binding.vitotronic.internal.protocol;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
-@XmlRootElement(name = "vito")
-@XmlAccessorType(XmlAccessType.FIELD)
-public class VitotronicConfig {
-
-	@XmlElementWrapper(name = "devices")
-	@XmlElement(name = "device")
-    private List<Device> devices;
-	
-	@XmlElementWrapper(name = "commands")
-	@XmlElement(name = "command")
-    private List<Command> commands;
-
-	public VitotronicConfig() {
-		devices = new ArrayList<Device>();
-		commands = new ArrayList<Command>();
-	}
-	
-	public void addDevice(Device device) {
-		devices.add(device);
-	}
-	
-	public void addCommand(Command command) {
-		commands.add(command);
-	}
-		
-	public Command getCommandByAddress(int address) {
-		for (Command command : commands) {
-			if (command.getAddress() == address) {
-				return command;
-			}
-		}
-		
-		return null;
-	}
+public interface IValueTransformer<TValue> {
+	TValue transformFromBytes(byte[] bytes);
+	byte[] transformToBytes(TValue value);
 }

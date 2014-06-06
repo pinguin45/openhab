@@ -26,49 +26,32 @@
  * (EPL), the licensors of this Program grant you additional permission
  * to convey the resulting work.
  */
-package org.openhab.binding.vitotronic.internal.config;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.bind.annotation.*;
+package org.openhab.binding.vitotronic.internal.protocol;
 
 /**
- * @author Robin Lenz
- * @since 1.0.0
+ * @author  Robin Lenz
+ * @since  1.0.0
  */
-@XmlRootElement(name = "vito")
-@XmlAccessorType(XmlAccessType.FIELD)
-public class VitotronicConfig {
+public class ParameterDetails {
+	private int address;
+	private int addressSize;
+	private int dataSize;
 
-	@XmlElementWrapper(name = "devices")
-	@XmlElement(name = "device")
-    private List<Device> devices;
-	
-	@XmlElementWrapper(name = "commands")
-	@XmlElement(name = "command")
-    private List<Command> commands;
+	public ParameterDetails(int address, int addressSize, int dataSize) {
+		this.address = address;
+		this.addressSize = addressSize;
+		this.dataSize = dataSize;
+	}
 
-	public VitotronicConfig() {
-		devices = new ArrayList<Device>();
-		commands = new ArrayList<Command>();
+	public int getDataSize() {
+		return dataSize;
 	}
 	
-	public void addDevice(Device device) {
-		devices.add(device);
+	public int getAddress() {
+		return address;
 	}
 	
-	public void addCommand(Command command) {
-		commands.add(command);
-	}
-		
-	public Command getCommandByAddress(int address) {
-		for (Command command : commands) {
-			if (command.getAddress() == address) {
-				return command;
-			}
-		}
-		
-		return null;
+	public int getAddressSize() {
+		return addressSize;
 	}
 }

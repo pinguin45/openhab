@@ -76,7 +76,7 @@ public class Command {
 		return this.length;
 	}
 	
-	public String getUnit() {
+	public String getUnitShortcut() {
 		return this.unit;
 	}
 	

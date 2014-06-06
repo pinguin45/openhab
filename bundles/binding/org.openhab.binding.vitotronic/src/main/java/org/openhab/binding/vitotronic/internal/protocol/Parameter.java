@@ -35,41 +35,56 @@ import org.openhab.binding.vitotronic.internal.protocol.utils.*;
  * @author Robin Lenz
  *
  */
-public abstract class Parameter implements IParameter {
-	
+public class Parameter<TValue> implements IParameterWithValue<TValue> {
 	private byte[] dataBytes;
 	
-	private int address;
-	private int addressSize;
-	private int dataSize;
+	private ParameterDetails parameterDetails;
+
+	private IValueTransformer<TValue> valueTransformer;
 	
-	public Parameter(int address, int addressSize, int dataSize) {
-		this.dataBytes = new byte[0];
-		this.address = address;	
-		this.addressSize = addressSize;
-		this.dataSize = dataSize;
+	public Parameter(ParameterDetails parameterDetails, IValueTransformer<TValue> valueTransformer) {
+		this.dataBytes = new byte[parameterDetails.getDataSize()];
+		this.parameterDetails = parameterDetails;
+		this.valueTransformer = valueTransformer;
 	}
 	
 	public int getAddressSize() {
-		return addressSize;
+		return parameterDetails.getAddressSize();
 	}
 	
 	public int getDataSize() {
-		return dataSize;
+		return dataBytes.length;
 	}
 	
 	public IByteQueue getByteQueue() {
 		IByteQueue result = new ByteQueue();
 		
-		result.enque(Convert.toHighByte(address));
-		result.enque(Convert.toByte(address));
+		result.enque(Convert.toHighByte(parameterDetails.getAddress()));
+		result.enque(Convert.toLowByte(parameterDetails.getAddress()));
 		result.enque(getDataSize());
 		
-		if (dataBytes.length > 0)
+		if (getDataSize() > 0)
 		{
 			result.enqueAll(dataBytes);
 		}
 		
 		return result;
+	}
+	
+	public void parseDataBytes(byte[] dataBytes) {
+		if (dataBytes.length != getDataSize())
+			throw new RuntimeException("Wrong size of data bytes");
+		
+		this.dataBytes = dataBytes;
+	}
+
+	@Override
+	public TValue getValue() {
+		return valueTransformer.transformFromBytes(dataBytes);
+	}
+	
+	@Override
+	public void setValue(TValue value) {
+		this.dataBytes = valueTransformer.transformToBytes(value);
 	}
 }

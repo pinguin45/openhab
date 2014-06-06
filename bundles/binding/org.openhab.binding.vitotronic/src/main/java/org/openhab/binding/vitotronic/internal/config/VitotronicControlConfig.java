@@ -28,8 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal.config;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.xml.bind.annotation.*;
 
@@ -37,35 +36,22 @@ import javax.xml.bind.annotation.*;
  * @author Robin Lenz
  * @since 1.0.0
  */
-@XmlRootElement(name = "vito")
+@XmlRootElement(name = "V-Control")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class VitotronicConfig {
+public class VitotronicControlConfig {
 
-	@XmlElementWrapper(name = "devices")
-	@XmlElement(name = "device")
-    private List<Device> devices;
+	@XmlElementWrapper(name = "units")
+	@XmlElement(name = "unit")
+    private List<Unit> units;
 	
-	@XmlElementWrapper(name = "commands")
-	@XmlElement(name = "command")
-    private List<Command> commands;
-
-	public VitotronicConfig() {
-		devices = new ArrayList<Device>();
-		commands = new ArrayList<Command>();
+	public VitotronicControlConfig() {
+		units = new ArrayList<Unit>();
 	}
 	
-	public void addDevice(Device device) {
-		devices.add(device);
-	}
-	
-	public void addCommand(Command command) {
-		commands.add(command);
-	}
-		
-	public Command getCommandByAddress(int address) {
-		for (Command command : commands) {
-			if (command.getAddress() == address) {
-				return command;
+	public Unit getUnitByShortcut(String shortcut) {
+		for (Unit unit : units) {
+			if (unit.getShortcut().equals(shortcut)) {
+				return unit;
 			}
 		}
 		

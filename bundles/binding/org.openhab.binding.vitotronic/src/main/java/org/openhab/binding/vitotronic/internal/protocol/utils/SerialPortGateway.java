@@ -36,8 +36,11 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class SerialPortGateway implements ISerialPortGateway {
+	private static final int RESPONSE_TIMEOUT = 1000;
+	private static final int WAIT_BETWEEN_READS = 10;
 	
 	private static Logger logger = LoggerFactory.getLogger(SerialPortGateway.class);
+	
 	private ISerialPort serialPort;
 	
 	public SerialPortGateway(ISerialPort serialPort) {
@@ -63,16 +66,43 @@ public class SerialPortGateway implements ISerialPortGateway {
 		IByteQueue responseBytes = new ByteQueue();
 		
 		int countOfMissingBytes = expectedResponseSizeInBytes;
+		int durationInMilliseconds = 0;
 		
-		while (countOfMissingBytes > 0) {	
-			byte[] readBytes = readBytes(countOfMissingBytes);
-			
-			responseBytes.enqueAll(readBytes);
-			
+		while (stillBytesMissingAndNotTimedout(countOfMissingBytes,	durationInMilliseconds)) {	
+			readAndEnqueBytes(responseBytes, countOfMissingBytes);
+				
 			countOfMissingBytes = expectedResponseSizeInBytes - responseBytes.size();
+			durationInMilliseconds += WAIT_BETWEEN_READS;
+			
+			waitBeforeNextRead();
 		}
 		
+		if (timedOut(durationInMilliseconds))
+			throw new WaitForResponseTimedoutException("Waiting for response timed out");
+		
 		return responseBytes;
+	}
+
+	private boolean stillBytesMissingAndNotTimedout(int countOfMissingBytes, int durationInMilliseconds) {
+		return countOfMissingBytes > 0 && durationInMilliseconds < RESPONSE_TIMEOUT;
+	}
+
+	private void readAndEnqueBytes(IByteQueue byteQueue, int countOfBytesToRead) {
+		byte[] readBytes = readBytes(countOfBytesToRead);
+		
+		byteQueue.enqueAll(readBytes);
+	}
+
+	private void waitBeforeNextRead() {
+		try {
+			Thread.sleep(WAIT_BETWEEN_READS);
+		} catch (InterruptedException e) {
+			logger.error("Thread.Sleep didn't work");
+		}
+	}
+
+	private boolean timedOut(int durationInMilliseconds) {
+		return durationInMilliseconds >= RESPONSE_TIMEOUT;
 	}
 
 	private byte[] readBytes(int bytesToRead) {

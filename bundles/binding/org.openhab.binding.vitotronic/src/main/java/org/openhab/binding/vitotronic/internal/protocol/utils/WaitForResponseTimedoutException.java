@@ -26,15 +26,17 @@
  * (EPL), the licensors of this Program grant you additional permission
  * to convey the resulting work.
  */
-package org.openhab.binding.vitotronic.internal.config;
-
-import org.openhab.binding.vitotronic.internal.protocol.IParameter;
+package org.openhab.binding.vitotronic.internal.protocol.utils;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
-public interface IVitotronicConfigController {
+public class WaitForResponseTimedoutException extends RuntimeException {
 	
-	IParameter getParameterFor(String commandName);
+	private static final long serialVersionUID = 3119213536262409737L;
+
+	public WaitForResponseTimedoutException(String message) {
+		super(message);
+	}
 }

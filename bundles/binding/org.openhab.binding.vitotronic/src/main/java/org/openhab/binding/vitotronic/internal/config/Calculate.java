@@ -28,47 +28,32 @@
  */
 package org.openhab.binding.vitotronic.internal.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.xml.bind.annotation.*;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
-@XmlRootElement(name = "vito")
+@XmlRootElement(name = "calc")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class VitotronicConfig {
+public class Calculate {
+	@XmlAttribute(name = "get")
+	private String forInput;
+	
+	@XmlAttribute(name = "set")
+	private String forOutput;
 
-	@XmlElementWrapper(name = "devices")
-	@XmlElement(name = "device")
-    private List<Device> devices;
-	
-	@XmlElementWrapper(name = "commands")
-	@XmlElement(name = "command")
-    private List<Command> commands;
-
-	public VitotronicConfig() {
-		devices = new ArrayList<Device>();
-		commands = new ArrayList<Command>();
-	}
-	
-	public void addDevice(Device device) {
-		devices.add(device);
-	}
-	
-	public void addCommand(Command command) {
-		commands.add(command);
-	}
+	public String getInputFormula() {
+		if (forInput == null)
+			return "";
 		
-	public Command getCommandByAddress(int address) {
-		for (Command command : commands) {
-			if (command.getAddress() == address) {
-				return command;
-			}
-		}
+		return forInput;
+	}
+	
+	public String getOutputFormula() {
+		if (forOutput == null)
+			return "";
 		
-		return null;
+		return forOutput;
 	}
 }
