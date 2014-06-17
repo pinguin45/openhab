@@ -157,6 +157,7 @@ public class P300VitotronicProtocolTest {
 		return To.ByteArray(hexString);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private IParameterFactory configuredParameterFactory() {
 		IParameterWithValue<String> parameter = mock(IParameterWithValue.class);
 		IParameterFactory parameterFactory = mock(IParameterFactory.class);

@@ -27,7 +27,11 @@
  * to convey the resulting work.
  */
 package org.openhab.binding.vitotronic.internal.protocol.utils;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
+
+import com.sun.istack.internal.logging.Logger;
 
 /**
  * Methods for converting Datatypes
@@ -92,5 +96,38 @@ public class Convert {
 		}
 		
 		return result;
+	}
+
+	public static int toInteger(byte[] bytes) {
+		String valueAsHexString = buildValueAsHexString(bytes);
+		
+		return Integer.parseInt(valueAsHexString, 16);
+	}
+
+	private static String buildValueAsHexString(byte[] bytes) {
+		String valueAsHexStringFormat = getValueAsHexStringFormatForLength(bytes.length);
+		 
+		return String.format(valueAsHexStringFormat, getObjectArrayOfByteArray(bytes));
+	}
+
+	private static Object[] getObjectArrayOfByteArray(byte[] bytes) {
+		Object[] objectArray = new Object[bytes.length];
+		
+		for (int pos = 0; pos < bytes.length; pos++) {
+			objectArray[bytes.length - pos - 1] = bytes[pos];
+		}
+		
+		return objectArray;
+	}
+
+	private static String getValueAsHexStringFormatForLength(int length) {
+		String valueAsHexStringFormat = "";
+		
+		for (int pos = 0; pos < length; pos++)
+		{
+			valueAsHexStringFormat += "%02x";
+		}
+		
+		return valueAsHexStringFormat;
 	}
 }

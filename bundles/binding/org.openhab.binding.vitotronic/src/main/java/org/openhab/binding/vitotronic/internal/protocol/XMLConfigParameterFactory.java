@@ -28,8 +28,6 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import java.util.*;
-
 import org.openhab.binding.vitotronic.internal.config.*;
 
 /**
@@ -40,17 +38,13 @@ public class XMLConfigParameterFactory implements IParameterFactory {
 
 	private final VitotronicConfig vitotronicConfig;
 	private final VitotronicControlConfig vitotronicControlConfig;
-	
-	private final Map<String, Class<?>> dataTypeMapping = new HashMap<String, Class<?>>() {{
-		  put( "short", Double.class);
-		}}; 
-	
-	public XMLConfigParameterFactory(VitotronicConfig vitotronicConfig, VitotronicControlConfig vitotronicControlConfig)
-	{
+	private final IValueTransformerFactory valueTransformerFactory;
+		
+	public XMLConfigParameterFactory(VitotronicConfig vitotronicConfig, VitotronicControlConfig vitotronicControlConfig, IValueTransformerFactory valueTransformerFactory) {
 		this.vitotronicConfig = vitotronicConfig;
 		this.vitotronicControlConfig = vitotronicControlConfig;
-	}
-	
+		this.valueTransformerFactory = valueTransformerFactory;
+	}	
 	
 	@Override
 	public <TParameterValue> IParameterWithValue<TParameterValue> createParameterFor(int address) {
@@ -70,7 +64,30 @@ public class XMLConfigParameterFactory implements IParameterFactory {
 	}
 	
 	private <TParameterValue> IParameterWithValue<TParameterValue> createParameterForCommand(Command command) {
+		IValueTransformer<TParameterValue> valueTransformer = createValueTransformerForUnitShortcut(command.getUnitShortcut());
+		ParameterDetails details = createParameterDetailsForCommand(command);	
 		
+		return new Parameter<TParameterValue>(details, valueTransformer);
+	}
+
+	private ParameterDetails createParameterDetailsForCommand(Command command) {
+		return new ParameterDetails(command.getAddress(), 4, command.getLength());
+	}
+
+	private <TParameterValue> IValueTransformer<TParameterValue> createValueTransformerForUnitShortcut(
+			String unitShortcut) {
+		Unit unit = getUnitByShortcut(unitShortcut);
+		
+		return valueTransformerFactory.createForUnit(unit);
+	}
+
+	private Unit getUnitByShortcut(String unitShortcut) {
+		Unit unit = vitotronicControlConfig.getUnitByShortcut(unitShortcut);
+		
+		if (unit == null)
+			throw new RuntimeException(String.format("No unit found with shortcut: '%s'", unitShortcut));
+		
+		return unit;
 	}
 
 }

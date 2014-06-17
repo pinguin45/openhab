@@ -28,26 +28,52 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import org.openhab.binding.vitotronic.internal.protocol.utils.Convert;
+import java.util.*;
+
+import org.openhab.binding.vitotronic.internal.config.Unit;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
-public class TemperatureTransformer implements IValueTransformer<Double> {
+public class ValueTransformerFactory implements IValueTransformerFactory {
 
+	private Map<String, Class<?>> transformersForUnitShortcut = new HashMap<String, Class<?>>() {
+		private static final long serialVersionUID = 1L;
+
+	{
+				put("UT", TemperatureTransformer.class);
+			}};
+	
 	@Override
-	public Double transformFromBytes(byte[] bytes) {
-		int valueAsInteger = Convert.toInteger(bytes);
+	public <TValue> IValueTransformer<TValue> createForUnit(Unit unit) {
+		if (unit == null)
+			return null;
 		
-		return valueAsInteger / 10.0;
+		Class<?> classOfValueTransformer = getClassOfValueTransformer(unit.getShortcut());
+		
+		return createInstanceOfValueTransformer(classOfValueTransformer);
 	}
 
-	@Override
-	public byte[] transformToBytes(Double value) {
-		int valueAsInteger = (int) (value * 10);
+	private Class<?> getClassOfValueTransformer(String unitShortcut) {
+		Class<?> classOfValueTransformer = transformersForUnitShortcut.get(unitShortcut);
 		
-		return new byte[] { Convert.toLowByte(valueAsInteger), Convert.toHighByte(valueAsInteger)};
+		if (classOfValueTransformer == null)
+			throw new RuntimeException(String.format("No transformer found for unit shortcut '%s'", unitShortcut));
+		
+		return classOfValueTransformer;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <TValue> IValueTransformer<TValue> createInstanceOfValueTransformer(
+			Class<?> classOfValueTransformer) {
+		try {
+			return (IValueTransformer<TValue>) classOfValueTransformer.newInstance();
+		} catch (InstantiationException e) {
+			return null;
+		} catch (IllegalAccessException e) {
+			return null;
+		}
 	}
 
 }

@@ -28,26 +28,12 @@
  */
 package org.openhab.binding.vitotronic.internal.protocol;
 
-import org.openhab.binding.vitotronic.internal.protocol.utils.Convert;
+import org.openhab.binding.vitotronic.internal.config.*;
 
 /**
  * @author Robin Lenz
  * @since 1.0.0
  */
-public class TemperatureTransformer implements IValueTransformer<Double> {
-
-	@Override
-	public Double transformFromBytes(byte[] bytes) {
-		int valueAsInteger = Convert.toInteger(bytes);
-		
-		return valueAsInteger / 10.0;
-	}
-
-	@Override
-	public byte[] transformToBytes(Double value) {
-		int valueAsInteger = (int) (value * 10);
-		
-		return new byte[] { Convert.toLowByte(valueAsInteger), Convert.toHighByte(valueAsInteger)};
-	}
-
+public interface IValueTransformerFactory {
+	<TValue> IValueTransformer<TValue> createForUnit(Unit unit);
 }
