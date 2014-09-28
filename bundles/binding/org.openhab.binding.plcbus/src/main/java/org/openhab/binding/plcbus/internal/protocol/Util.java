@@ -44,4 +44,15 @@ public class Util {
 		
 		logger.info(all);
 	}
+	
+	public static String getByteStringFor(byte[] bytes) {
+		String all = new String();
+		
+		for (byte current : bytes)
+		{
+			all = all + String.format("%02X ", current);
+		}
+		
+		return all.trim();
+	}
 }

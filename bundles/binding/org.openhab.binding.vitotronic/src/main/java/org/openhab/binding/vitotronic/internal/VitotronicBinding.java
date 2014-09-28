@@ -54,35 +54,17 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 	private ISerialPortGateway serialPortGateway;
 	private Lock controllerLock = new ReentrantLock();
 	
+	private VitotronicOpenhabConfig openhabConfig;
+	
 	@Override
 	public void updated(Dictionary<String, ?> config)
 			throws ConfigurationException {
 		
-		if (config == null)
-		{
-			return;
-		}
-		
-		String serialPortName = (String) config.get("port");
-		
-		logger.error("SerialPortName: " + serialPortName);
-		
-		if (!serialPortName.isEmpty())
-		{		
-			serialPortGateway = new SerialPortGateway(TCPSerialPort.Create(serialPortName));
-		}
+		createVitotronicOpenhabConfigFor(config);
+	}
 
-		String refresh = (String)config.get("refresh");
-		
-		if (!refresh.isEmpty())
-		{
-			refreshRate = Integer.parseInt(refresh);
-		}
-				
-		if (serialPortGateway == null)
-		{
-			logger.error("No Serialport config in openhab.cfg found");
-		}
+	private void createVitotronicOpenhabConfigFor(Dictionary<String, ?> config) throws ConfigurationException {
+		openhabConfig = new VitotronicOpenhabConfig(config);
 	}
 
 	@Override
