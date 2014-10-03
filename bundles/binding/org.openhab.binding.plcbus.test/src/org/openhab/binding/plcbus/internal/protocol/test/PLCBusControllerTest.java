@@ -13,19 +13,7 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
-import org.openhab.binding.plcbus.internal.protocol.Command;
-import org.openhab.binding.plcbus.internal.protocol.DefaultOnePhaseReceiveFrameContainer;
-import org.openhab.binding.plcbus.internal.protocol.IPLCBusController;
-import org.openhab.binding.plcbus.internal.protocol.IReceiveFrameContainer;
-import org.openhab.binding.plcbus.internal.protocol.IReceiveFrameContainerFactory;
-import org.openhab.binding.plcbus.internal.protocol.ISerialPortGateway;
-import org.openhab.binding.plcbus.internal.protocol.PLCBusController;
-import org.openhab.binding.plcbus.internal.protocol.PLCUnit;
-import org.openhab.binding.plcbus.internal.protocol.ReceiveFrame;
-import org.openhab.binding.plcbus.internal.protocol.StatusRequestReceiveFrameContainer;
-import org.openhab.binding.plcbus.internal.protocol.StatusResponse;
-import org.openhab.binding.plcbus.internal.protocol.TransmitFrame;
+import org.openhab.binding.plcbus.internal.protocol.*;
 import org.openhab.binding.plcbus.internal.protocol.commands.*;
 
 import static org.mockito.Mockito.*;
@@ -57,21 +45,21 @@ public class PLCBusControllerTest {
 	public void testBright() {
 		int seconds = 10;
 
-		IReceiveFrameContainerFactory factory = mock(IReceiveFrameContainerFactory.class);
-		IReceiveFrameContainer container = mock(IReceiveFrameContainer.class);
-		when(factory.createReceiveFrameContainerFor(eq(DefaultOnePhaseReceiveFrameContainer.class))).thenReturn(container);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
 		PLCUnit unit = mock(PLCUnit.class);
 		when(unit.getAddress()).thenReturn("A1");
 		when(unit.getUsercode()).thenReturn("D1");
-		ReceiveFrame receiveFrame = mock(ReceiveFrame.class);
-		when(container.getAnswerFrame()).thenReturn(receiveFrame);
-		when(receiveFrame.isAcknowledgement()).thenReturn(true);
+		ActorResponse receiveFrame = mock(ActorResponse.class);
+		when(receiveFrame.isAcknowledged()).thenReturn(true);
+		IPLCBusProtocol plcBusProtocol = mock(IPLCBusProtocol.class);
+		when(plcBusProtocol.getSendCommandBytes(same(unit), any(Bright.class))).thenReturn(new ByteQueue());
+		when(plcBusProtocol.expectedSendCommandResponseSize()).thenReturn(18);
+		when(plcBusProtocol.parseResponseFromActor(any(IByteQueue.class))).thenReturn(receiveFrame);
 		
-		IPLCBusController controller = PLCBusController.create(gateway, factory);
+		IPLCBusController controller = PLCBusController.create(gateway, plcBusProtocol);
 		boolean found = controller.bright(unit, seconds);
 		
-		verify(gateway).send(argThat(new TransmitFrameMatcher(Bright.class)), same(container));
+		verify(gateway).sendBytesAndWaitForResponse(any(IByteQueue.class), eq(18));
 		assertEquals(true, found);		
 	}
 	
@@ -82,21 +70,21 @@ public class PLCBusControllerTest {
 	public void testDim() {
 		int seconds = 10;
 
-		IReceiveFrameContainerFactory factory = mock(IReceiveFrameContainerFactory.class);
-		IReceiveFrameContainer container = mock(IReceiveFrameContainer.class);
-		when(factory.createReceiveFrameContainerFor(eq(DefaultOnePhaseReceiveFrameContainer.class))).thenReturn(container);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
 		PLCUnit unit = mock(PLCUnit.class);
 		when(unit.getAddress()).thenReturn("A1");
 		when(unit.getUsercode()).thenReturn("D1");
-		ReceiveFrame receiveFrame = mock(ReceiveFrame.class);
-		when(container.getAnswerFrame()).thenReturn(receiveFrame);
-		when(receiveFrame.isAcknowledgement()).thenReturn(true);
+		ActorResponse actorResponse = mock(ActorResponse.class);
+		when(actorResponse.isAcknowledged()).thenReturn(true);
+		IPLCBusProtocol plcBusProtocol = mock(IPLCBusProtocol.class);
+		when(plcBusProtocol.getSendCommandBytes(same(unit), any(Dim.class))).thenReturn(new ByteQueue());
+		when(plcBusProtocol.expectedSendCommandResponseSize()).thenReturn(18);
+		when(plcBusProtocol.parseResponseFromActor(any(IByteQueue.class))).thenReturn(actorResponse);
 		
-		IPLCBusController controller = PLCBusController.create(gateway, factory);
+		IPLCBusController controller = PLCBusController.create(gateway, plcBusProtocol);
 		boolean found = controller.dim(unit, seconds);
 		
-		verify(gateway).send(argThat(new TransmitFrameMatcher(Dim.class)), same(container));
+		verify(gateway).sendBytesAndWaitForResponse(any(IByteQueue.class), eq(18));
 		assertEquals(true, found);
 	}
 
@@ -106,21 +94,21 @@ public class PLCBusControllerTest {
 	@Test
 	public void testSwitchOff() {
 
-		IReceiveFrameContainerFactory factory = mock(IReceiveFrameContainerFactory.class);
-		IReceiveFrameContainer container = mock(IReceiveFrameContainer.class);
-		when(factory.createReceiveFrameContainerFor(eq(DefaultOnePhaseReceiveFrameContainer.class))).thenReturn(container);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
 		PLCUnit unit = mock(PLCUnit.class);
 		when(unit.getAddress()).thenReturn("A1");
 		when(unit.getUsercode()).thenReturn("D1");
-		ReceiveFrame receiveFrame = mock(ReceiveFrame.class);
-		when(container.getAnswerFrame()).thenReturn(receiveFrame);
-		when(receiveFrame.isAcknowledgement()).thenReturn(true);
+		ActorResponse actorResponse = mock(ActorResponse.class);
+		when(actorResponse.isAcknowledged()).thenReturn(true);
+		IPLCBusProtocol plcBusProtocol = mock(IPLCBusProtocol.class);
+		when(plcBusProtocol.getSendCommandBytes(same(unit), any(UnitOff.class))).thenReturn(new ByteQueue());
+		when(plcBusProtocol.expectedSendCommandResponseSize()).thenReturn(18);
+		when(plcBusProtocol.parseResponseFromActor(any(IByteQueue.class))).thenReturn(actorResponse);
 		
-		IPLCBusController controller = PLCBusController.create(gateway, factory);
+		IPLCBusController controller = PLCBusController.create(gateway, plcBusProtocol);
 		boolean found = controller.switchOff(unit);
 		
-		verify(gateway).send(argThat(new TransmitFrameMatcher(UnitOff.class)), same(container));
+		verify(gateway).sendBytesAndWaitForResponse(any(IByteQueue.class), eq(18));
 		assertEquals(true, found);
 	}
 
@@ -130,21 +118,21 @@ public class PLCBusControllerTest {
 	@Test
 	public void testSwitchOn() {
 
-		IReceiveFrameContainerFactory factory = mock(IReceiveFrameContainerFactory.class);
-		IReceiveFrameContainer container = mock(IReceiveFrameContainer.class);
-		when(factory.createReceiveFrameContainerFor(eq(DefaultOnePhaseReceiveFrameContainer.class))).thenReturn(container);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
 		PLCUnit unit = mock(PLCUnit.class);
 		when(unit.getAddress()).thenReturn("A1");
 		when(unit.getUsercode()).thenReturn("D1");
-		ReceiveFrame receiveFrame = mock(ReceiveFrame.class);
-		when(container.getAnswerFrame()).thenReturn(receiveFrame);
-		when(receiveFrame.isAcknowledgement()).thenReturn(true);
+		ActorResponse actorResponse = mock(ActorResponse.class);
+		when(actorResponse.isAcknowledged()).thenReturn(true);
+		IPLCBusProtocol plcBusProtocol = mock(IPLCBusProtocol.class);
+		when(plcBusProtocol.getSendCommandBytes(same(unit), any(UnitOn.class))).thenReturn(new ByteQueue());
+		when(plcBusProtocol.expectedSendCommandResponseSize()).thenReturn(18);
+		when(plcBusProtocol.parseResponseFromActor(any(IByteQueue.class))).thenReturn(actorResponse);
 		
-		IPLCBusController controller = PLCBusController.create(gateway, factory);
+		IPLCBusController controller = PLCBusController.create(gateway, plcBusProtocol);
 		boolean found = controller.switchOn(unit);
 		
-		verify(gateway).send(argThat(new TransmitFrameMatcher(UnitOn.class)), same(container));
+		verify(gateway).sendBytesAndWaitForResponse(any(IByteQueue.class), eq(18));
 		assertEquals(true, found);
 	}
 
@@ -154,21 +142,21 @@ public class PLCBusControllerTest {
 	@Test
 	public void testFadeStop() {
 
-		IReceiveFrameContainerFactory factory = mock(IReceiveFrameContainerFactory.class);
-		IReceiveFrameContainer container = mock(IReceiveFrameContainer.class);
-		when(factory.createReceiveFrameContainerFor(eq(DefaultOnePhaseReceiveFrameContainer.class))).thenReturn(container);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
 		PLCUnit unit = mock(PLCUnit.class);
 		when(unit.getAddress()).thenReturn("A1");
 		when(unit.getUsercode()).thenReturn("D1");
-		ReceiveFrame receiveFrame = mock(ReceiveFrame.class);
-		when(container.getAnswerFrame()).thenReturn(receiveFrame);
-		when(receiveFrame.isAcknowledgement()).thenReturn(true);
+		ActorResponse actorResponse = mock(ActorResponse.class);
+		when(actorResponse.isAcknowledged()).thenReturn(true);
+		IPLCBusProtocol plcBusProtocol = mock(IPLCBusProtocol.class);
+		when(plcBusProtocol.getSendCommandBytes(same(unit), any(FadeStop.class))).thenReturn(new ByteQueue());
+		when(plcBusProtocol.expectedSendCommandResponseSize()).thenReturn(18);
+		when(plcBusProtocol.parseResponseFromActor(any(IByteQueue.class))).thenReturn(actorResponse);
 		
-		IPLCBusController controller = PLCBusController.create(gateway, factory);
+		IPLCBusController controller = PLCBusController.create(gateway, plcBusProtocol);
 		boolean found = controller.fadeStop(unit);
 		
-		verify(gateway).send(argThat(new TransmitFrameMatcher(FadeStop.class)), same(container));
+		verify(gateway).sendBytesAndWaitForResponse(any(IByteQueue.class), eq(18));
 		assertEquals(true, found);
 	}
 
@@ -178,56 +166,29 @@ public class PLCBusControllerTest {
 	@Test
 	public void testRequestStatusFor() {
 		
-		IReceiveFrameContainerFactory factory = mock(IReceiveFrameContainerFactory.class);
-		IReceiveFrameContainer container = mock(IReceiveFrameContainer.class);
-		when(factory.createReceiveFrameContainerFor(eq(StatusRequestReceiveFrameContainer.class))).thenReturn(container);
 		ISerialPortGateway gateway = mock(ISerialPortGateway.class);
 		PLCUnit unit = mock(PLCUnit.class);
 		when(unit.getAddress()).thenReturn("A1");
 		when(unit.getUsercode()).thenReturn("D1");
-		ReceiveFrame receiveFrame = mock(ReceiveFrame.class);
-		when(container.getAnswerFrame()).thenReturn(receiveFrame);
-		when(receiveFrame.isAcknowledgement()).thenReturn(true);
+		ActorResponse receiveFrame = mock(ActorResponse.class);
+		when(receiveFrame.isAcknowledged()).thenReturn(true);
 		Command command = mock(Command.class);
 		when(receiveFrame.getCommand()).thenReturn(command);
 		int firstParameter = 1;
 		when(receiveFrame.getFirstParameter()).thenReturn(firstParameter);
 		int secondParameter = 2;
 		when(receiveFrame.getSecondParameter()).thenReturn(secondParameter);
+		IPLCBusProtocol plcBusProtocol = mock(IPLCBusProtocol.class);
+		when(plcBusProtocol.getSendCommandBytes(same(unit), any(Bright.class))).thenReturn(new ByteQueue());
+		when(plcBusProtocol.expectedSendCommandResponseSize()).thenReturn(18);
+		when(plcBusProtocol.parseResponseFromActor(any(IByteQueue.class))).thenReturn(receiveFrame);
 		
-		IPLCBusController controller = PLCBusController.create(gateway, factory);
+		IPLCBusController controller = PLCBusController.create(gateway, plcBusProtocol);
 		StatusResponse found = controller.requestStatusFor(unit);
 		
-		verify(gateway).send(argThat(new TransmitFrameMatcher(StatusRequest.class)), same(container));
+		verify(gateway).sendBytesAndWaitForResponse(any(IByteQueue.class), eq(18));
 		assertNotNull(found);
 		assertEquals(firstParameter, found.getFirstParameter());
 		assertEquals(secondParameter, found.getSecondParameter());
-	}
-	
-	private class TransmitFrameMatcher extends ArgumentMatcher<TransmitFrame>
-	{
-		private Class<?> classOfCommand;
-		
-		/**
-		 * Constructor
-		 * @param classOfCommand
-		 */
-		public TransmitFrameMatcher(Class<?> classOfCommand) {
-			this.classOfCommand = classOfCommand;
-		}
-		
-		@Override
-		public boolean matches(Object argument) {
-			TransmitFrame frame = (TransmitFrame)argument;
-			
-			Command command =  frame.getCommand();
-			
-			if (command == null)
-			{
-				return false;
-			}
-			
-			return command.getClass() == classOfCommand;
-		}		
 	}
 }

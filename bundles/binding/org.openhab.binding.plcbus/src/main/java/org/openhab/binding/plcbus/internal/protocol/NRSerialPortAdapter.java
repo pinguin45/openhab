@@ -78,9 +78,7 @@ public class NRSerialPortAdapter implements ISerialPort {
 	@Override
 	public byte[] readBytes(int count) throws SerialPortException {
 		InputStream in = serialPort.getInputStream();
-		
-		logger.info("Read Bytes: ");
-		
+				
 		byte[] bytes = new byte[count];
 		
 		try {
@@ -88,8 +86,6 @@ public class NRSerialPortAdapter implements ISerialPort {
 		} catch (IOException e) {
 			throw new SerialPortException(e.getMessage());
 		}
-		
-		Util.printBytes(bytes);
 		
 		return bytes;
 	}
@@ -115,9 +111,6 @@ public class NRSerialPortAdapter implements ISerialPort {
 	public boolean writeBytes(byte[] bytes) throws SerialPortException {
 		OutputStream out = serialPort.getOutputStream();
 
-		logger.info("Write Bytes: ");
-		Util.printBytes(bytes);
-		
 		try {
 			out.write(bytes);
 		} catch (IOException e) {

@@ -19,97 +19,75 @@ import org.openhab.binding.plcbus.internal.protocol.commands.*;
 public class PLCBusController implements IPLCBusController {
 
 	private ISerialPortGateway serialPortGateway;
-	private IReceiveFrameContainerFactory receiveFrameContainerFactory;
+	private IPLCBusProtocol plcBusProtocol;
 
-	private PLCBusController(ISerialPortGateway serialPortGateway, IReceiveFrameContainerFactory receiveFrameContainerFactory) {
+	private PLCBusController(ISerialPortGateway serialPortGateway, IPLCBusProtocol plcBusProtocol) {
 		this.serialPortGateway = serialPortGateway;
-		this.receiveFrameContainerFactory = receiveFrameContainerFactory;
+		this.plcBusProtocol = plcBusProtocol;
 	}
 
-	public static IPLCBusController create(ISerialPortGateway serialPortGateway, IReceiveFrameContainerFactory receiveFrameContainerFactory) {
-		return new PLCBusController(serialPortGateway, receiveFrameContainerFactory);
+	public static IPLCBusController create(ISerialPortGateway serialPortGateway, IPLCBusProtocol plcBusProtocol) {
+		return new PLCBusController(serialPortGateway, plcBusProtocol);
 	}
 
-	private boolean sendWithoutAnswer(String usercode, String address,
-			Command command) {
-		IReceiveFrameContainer container = getDefaultReceiveFrameContainer();
-
-		send(usercode, address, command, container);
-
-		ReceiveFrame answer = container.getAnswerFrame();
+	private boolean sendWithoutAnswer(PLCUnit unit, Command command) {
+		ActorResponse answer = send(unit, command);
 
 		if (answer == null) {
 			return false;
 		}
 
-		return answer.isAcknowledgement();
+		return answer.isAcknowledged();
 	}
 
-	private IReceiveFrameContainer getDefaultReceiveFrameContainer() {
-		return receiveFrameContainerFactory.createReceiveFrameContainerFor(DefaultOnePhaseReceiveFrameContainer.class);
-	}
+	private ActorResponse send(PLCUnit unit, Command command) {
+		IByteQueue bytesToSend = plcBusProtocol.getSendCommandBytes(unit, command);
+		int expectedResponseSizeInBytes = plcBusProtocol.expectedSendCommandResponseSize();
+		
+		IByteQueue receivedBytes = serialPortGateway.sendBytesAndWaitForResponse(bytesToSend, expectedResponseSizeInBytes);
 
-	private void send(String usercode, String address, Command command,
-			IReceiveFrameContainer container) {
-		TransmitFrame frame = createTransmitFrame(usercode, address, command);
-		serialPortGateway.send(frame, container);
-	}
-
-	private TransmitFrame createTransmitFrame(String usercode, String address, Command command) {
-		CommandFrame commandFrame = new CommandFrame(command);
-		commandFrame.setDemandAckTo(true);
-
-		DataFrame data = new DataFrame(commandFrame);
-		data.setUserCode(usercode);
-		data.setAddress(address);
-
-		TransmitFrame frame = new TransmitFrame(data);
-
-		return frame;
+		ActorResponse answer = plcBusProtocol.parseResponseFromActor(receivedBytes);
+		return answer;
 	}
 
 	@Override
 	public boolean bright(PLCUnit unit, int seconds) {
 		Bright command = new Bright();
 		command.setSeconds(seconds);
-		return sendWithoutAnswer(unit.getUsercode(), unit.getAddress(), command);
+		return sendWithoutAnswer(unit, command);
 	}
 
 	@Override
 	public boolean dim(PLCUnit unit, int seconds) {
 		Dim command = new Dim();
 		command.setSeconds(seconds);
-		return sendWithoutAnswer(unit.getUsercode(), unit.getAddress(), command);
+		return sendWithoutAnswer(unit, command);
 	}
 
 	@Override
 	public boolean switchOff(PLCUnit unit) {
-		return sendWithoutAnswer(unit.getUsercode(), unit.getAddress(), new UnitOff());
+		return sendWithoutAnswer(unit, new UnitOff());
 	}
 
 	@Override
 	public boolean switchOn(PLCUnit unit) {
-		return sendWithoutAnswer(unit.getUsercode(), unit.getAddress(), new UnitOn());
+		return sendWithoutAnswer(unit, new UnitOn());
 	}
 
 	@Override
 	public boolean fadeStop(PLCUnit unit) {
-		return sendWithoutAnswer(unit.getUsercode(), unit.getAddress(), new FadeStop());
+		return sendWithoutAnswer(unit, new FadeStop());
 	}
 
 	@Override
 	public StatusResponse requestStatusFor(PLCUnit unit) {
-		IReceiveFrameContainer container = receiveFrameContainerFactory.createReceiveFrameContainerFor(StatusRequestReceiveFrameContainer.class);
-
-		send(unit.getUsercode(), unit.getAddress(), new StatusRequest(), container);
-
-		ReceiveFrame answer = container.getAnswerFrame();
+		ActorResponse answer = send(unit, new StatusRequest());
 
 		if (answer == null) {
 			return null;
 		}
 
-		return new StatusResponse(answer.isAcknowledgement(),
+		return new StatusResponse(answer.isAcknowledged(),
 				answer.getCommand(), answer.getFirstParameter(),
 				answer.getSecondParameter());
 	}

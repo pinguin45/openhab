@@ -8,6 +8,8 @@
  */
 package org.openhab.binding.plcbus.internal.protocol;
 
+import org.openhab.binding.plcbus.internal.protocol.IByteQueue;
+
 /**
  * Interface for a SerialPortGateway
  * 
@@ -15,9 +17,5 @@ package org.openhab.binding.plcbus.internal.protocol;
  * @since 1.1.0
  */
 public interface ISerialPortGateway {
-
-	public void send(TransmitFrame frame, IReceiveFrameContainer container);
-
-	public void close();
-	
+	public IByteQueue sendBytesAndWaitForResponse(IByteQueue bytesToWrite, int expectedResponseSizeInBytes);
 }

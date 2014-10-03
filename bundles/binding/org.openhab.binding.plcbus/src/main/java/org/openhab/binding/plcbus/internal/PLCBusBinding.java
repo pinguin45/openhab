@@ -11,23 +11,11 @@ package org.openhab.binding.plcbus.internal;
 import java.util.Dictionary;
 
 import org.openhab.binding.plcbus.PLCBusBindingProvider;
-import org.openhab.binding.plcbus.internal.protocol.DefaultOnePhaseReceiveFrameContainer;
-import org.openhab.binding.plcbus.internal.protocol.IPLCBusController;
-import org.openhab.binding.plcbus.internal.protocol.ISerialPortGateway;
-import org.openhab.binding.plcbus.internal.protocol.NRSerialPortAdapter;
-import org.openhab.binding.plcbus.internal.protocol.PLCBusController;
-import org.openhab.binding.plcbus.internal.protocol.ReceiveFrameContainerFactory;
-import org.openhab.binding.plcbus.internal.protocol.SerialPortGateway;
-import org.openhab.binding.plcbus.internal.protocol.StatusResponse;
-import org.openhab.core.binding.AbstractBinding;
-import org.openhab.core.binding.BindingProvider;
-import org.openhab.core.library.types.IncreaseDecreaseType;
-import org.openhab.core.library.types.OnOffType;
-import org.openhab.core.library.types.StopMoveType;
-import org.openhab.core.library.types.UpDownType;
+import org.openhab.binding.plcbus.internal.protocol.*;
+import org.openhab.core.binding.*;
+import org.openhab.core.library.types.*;
+import org.openhab.core.types.*;
 import org.openhab.core.types.Command;
-import org.openhab.core.types.State;
-import org.openhab.core.types.UnDefType;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.component.ComponentContext;
@@ -45,7 +33,7 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 
 	private static Logger logger = LoggerFactory.getLogger(PLCBusBinding.class);
 
-	private ISerialPortGateway serialPortGateway;
+	private ISerialPort serialPort;
 	
 	private IPLCBusController plcBusController;
 
@@ -58,8 +46,12 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 		}
 		providers.clear();
 
-		if (serialPortGateway != null) {
-			serialPortGateway.close();
+		if (serialPort != null) {
+			try {
+				serialPort.close();
+			} catch (SerialPortException e) {
+				logger.error(e.getMessage());
+			}
 		}
 	}
 	
@@ -138,13 +130,36 @@ public class PLCBusBinding extends AbstractBinding<PLCBusBindingProvider> implem
 		if (config == null) {
 			return;
 		}
-		serialPortGateway = SerialPortGateway.create(new NRSerialPortAdapter((String) config.get("port"), 9600));
+		
+		createSerialPort(config);
+		
+		createPLCBusController(config);
+	}
 
-		if (serialPortGateway == null) {
+	private void createPLCBusController(Dictionary<String, ?> config) {
+		String configuredProtocol = (String) config.get("protocol");
+		
+		if (configuredProtocol == null) {
+			configuredProtocol = "OnePhase";
+		}
+		
+		IPLCBusProtocol protocol = configuredProtocol.equals("ThreePhase") ? new ThreePhasePLCBusProtocol() : new OnePhasePLCBusProtocol();		
+		
+		plcBusController = PLCBusController.create(new SerialPortGateway(serialPort), protocol);
+	}
+
+	private void createSerialPort(Dictionary<String, ?> config) {
+		serialPort = new NRSerialPortAdapter((String) config.get("port"), 9600);
+
+		if (serialPort == null) {
 			logger.error("No Serialport config in openhab.cfg found");
 		}
 		
-		plcBusController = PLCBusController.create(serialPortGateway, new ReceiveFrameContainerFactory());
+		try {
+			serialPort.open();
+		} catch (SerialPortException e) {
+			logger.error("Failed to open Serialport: %s", e.getMessage());
+		}
 	}
 	
 }

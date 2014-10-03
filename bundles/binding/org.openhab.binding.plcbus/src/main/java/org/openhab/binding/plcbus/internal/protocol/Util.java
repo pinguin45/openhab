@@ -42,7 +42,7 @@ public class Util {
 			all = all + String.format("%X ", current);
 		}
 		
-		logger.info(all);
+		logger.debug(all);
 	}
 	
 	public static String getByteStringFor(byte[] bytes) {

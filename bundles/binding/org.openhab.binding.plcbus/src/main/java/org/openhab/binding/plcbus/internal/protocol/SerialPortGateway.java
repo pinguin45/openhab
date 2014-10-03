@@ -8,7 +8,6 @@
  */
 package org.openhab.binding.plcbus.internal.protocol;
 
-import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,59 +16,110 @@ import org.slf4j.LoggerFactory;
  * @since 1.1.0
  */
 public class SerialPortGateway implements ISerialPortGateway {
-
+	private static final int RESPONSE_TIMEOUT = 1500;
+	private static final int WAIT_BETWEEN_READS = 10;
+	
 	private static Logger logger = LoggerFactory.getLogger(SerialPortGateway.class);
+	
 	private ISerialPort serialPort;
-
-	private SerialPortGateway(ISerialPort serialPort) {
+	
+	public SerialPortGateway(ISerialPort serialPort) {
 		this.serialPort = serialPort;
 	}
 
-	public static ISerialPortGateway create(ISerialPort serialPort) {
-		return new SerialPortGateway(serialPort);
+	@Override
+	public IByteQueue sendBytesAndWaitForResponse(IByteQueue bytesToWrite, int expectedResponseSizeInBytes) {
+		clearSerialPort();
+		
+		sendBytes(bytesToWrite);
+		
+		return waitForResponse(expectedResponseSizeInBytes);
+	}
+	
+	private void clearSerialPort() {
+		try
+		{
+			serialPort.readBytes();
+		} catch (SerialPortException e) {
+			logger.error("Error while clearing serialport: %s", e.getMessage());
+		}
 	}
 
-	private boolean connect() {
+	private void sendBytes(IByteQueue bytesToWrite) {
 		try {
-			this.serialPort.open();
+			Util.printBytes(bytesToWrite.toByteArray());
+			
+			serialPort.writeBytes(bytesToWrite.toByteArray());
 		} catch (SerialPortException e) {
-			logger.error("Failed to open SerialPort: "  + e.getMessage());
-			return false;
+			logger.error("Error while writing bytes: %s", e.getMessage());
+		}
+	}
+
+	private IByteQueue waitForResponse(int expectedResponseSizeInBytes) {
+		IByteQueue responseBytes = new ByteQueue();
+		
+		int countOfMissingBytes = expectedResponseSizeInBytes;
+		int durationInMilliseconds = 0;
+		
+		while (stillBytesMissingAndNotTimedout(countOfMissingBytes,	durationInMilliseconds)) {	
+			readAndEnqueBytes(responseBytes, countOfMissingBytes);
+				
+			countOfMissingBytes = expectedResponseSizeInBytes - responseBytes.size();
+			durationInMilliseconds += WAIT_BETWEEN_READS;
+			
+			waitBeforeNextRead();
 		}
 		
-		return true;
+		Util.printBytes(responseBytes.toByteArray());
+		
+		return responseBytes;
 	}
-	
-	@Override
-	public void send(TransmitFrame frame,
-			IReceiveFrameContainer receivedFrameContainer) {
+
+	private boolean stillBytesMissingAndNotTimedout(int countOfMissingBytes, int durationInMilliseconds) {
+		return countOfMissingBytes > 0 && durationInMilliseconds < RESPONSE_TIMEOUT;
+	}
+
+	private void readAndEnqueBytes(IByteQueue byteQueue, int countOfBytesToRead) {
+		byte[] readBytes = readBytes(countOfBytesToRead);
+		
+		byteQueue.enqueAll(readBytes);
+	}
+
+	private void waitBeforeNextRead() {
 		try {
-			
-			connect();
-			
-			byte[] paket = Convert.toByteArray(frame.getBytes());
-
-			serialPort.writeBytes(paket);
-
-			try {
-				receivedFrameContainer.process(SerialPortByteProvider.create(serialPort));
-			} catch (Exception e) {
-				logger.error("Error while processing: " + e.getMessage());
-			}
-
-		} catch (Exception e) {
-			logger.info("Error in write methode: " + e.getMessage());
-		} finally {
-			close();
+			Thread.sleep(WAIT_BETWEEN_READS);
+		} catch (InterruptedException e) {
+			logger.error("Thread.Sleep didn't work");
 		}
 	}
 
-	public void close() {
+	private byte[] readBytes(int bytesToRead) {
 		try {
-			serialPort.close();
+			return serialPort.readBytes(getCountOfBytesToRead(bytesToRead));
 		} catch (SerialPortException e) {
-			logger.error("Close SerialPort failed: " + e.getMessage());
+			logger.error("Error while reading bytes (Count: %d): %s", bytesToRead, e.getMessage());
+		}
+		
+		return new byte[0];
+	}
+
+	private int getCountOfBytesToRead(int countOfMissingBytes) {
+		int availableBytesCount = getAvailableBytesCount();
+		
+		if (availableBytesCount > countOfMissingBytes) {
+			return countOfMissingBytes;
+		} else {
+			return availableBytesCount;
 		}
 	}
-	
+
+	private int getAvailableBytesCount() {
+		try {
+			return serialPort.getAvailableBytesCount();
+		} catch (SerialPortException e) {
+			logger.error("Error getting available byte count: %s", e.getMessage());
+		}
+		
+		return 0;
+	}
 }

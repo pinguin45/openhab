@@ -31,6 +31,10 @@ public class ReceiveFrame extends Frame<ReceiveDataFrame> {
 	public boolean isAcknowledgement() {
 		return getData().isAcknowledgement();
 	}
+	
+	public boolean isItself() {
+		return getData().isItself();
+	}
 
 	public int getFirstParameter() {
 		return getData().getFirstParameter();
