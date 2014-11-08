@@ -18,6 +18,7 @@ import org.openhab.binding.plcbus.internal.protocol.commands.*;
  */
 public class PLCBusController implements IPLCBusController {
 
+	private final int SEND_RETRIES = 3;
 	private ISerialPortGateway serialPortGateway;
 	private IPLCBusProtocol plcBusProtocol;
 
@@ -31,13 +32,34 @@ public class PLCBusController implements IPLCBusController {
 	}
 
 	private boolean sendWithoutAnswer(PLCUnit unit, Command command) {
-		ActorResponse answer = send(unit, command);
+		ActorResponse answer = sendWithRetry(unit, command);
 
 		if (answer == null) {
 			return false;
 		}
 
 		return answer.isAcknowledged();
+	}
+
+	private ActorResponse sendWithRetry(PLCUnit unit, Command command) {
+		
+		int retries = 0;
+		
+		while (!maxRetriesAchieved(retries)) {
+			ActorResponse answer = send(unit, command);
+			
+			if (answer != null && answer.isAcknowledged()) {
+				return answer;
+			}
+			
+			retries++;
+		}
+				
+		return null;
+	}
+
+	private boolean maxRetriesAchieved(int retries) {
+		return retries == SEND_RETRIES;
 	}
 
 	private ActorResponse send(PLCUnit unit, Command command) {
@@ -81,7 +103,7 @@ public class PLCBusController implements IPLCBusController {
 
 	@Override
 	public StatusResponse requestStatusFor(PLCUnit unit) {
-		ActorResponse answer = send(unit, new StatusRequest());
+		ActorResponse answer = sendWithRetry(unit, new StatusRequest());
 
 		if (answer == null) {
 			return null;

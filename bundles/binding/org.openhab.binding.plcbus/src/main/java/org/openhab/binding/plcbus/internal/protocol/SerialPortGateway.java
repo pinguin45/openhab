@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * @since 1.1.0
  */
 public class SerialPortGateway implements ISerialPortGateway {
-	private static final int RESPONSE_TIMEOUT = 1500;
+	private static final int RESPONSE_TIMEOUT = 5000;
 	private static final int WAIT_BETWEEN_READS = 10;
 	
 	private static Logger logger = LoggerFactory.getLogger(SerialPortGateway.class);
