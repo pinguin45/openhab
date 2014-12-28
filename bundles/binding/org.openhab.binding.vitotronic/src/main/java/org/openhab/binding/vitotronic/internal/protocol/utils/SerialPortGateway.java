@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class SerialPortGateway implements ISerialPortGateway {
-	private static final int RESPONSE_TIMEOUT = 1000;
+	private static final int RESPONSE_TIMEOUT = 5000;
 	private static final int WAIT_BETWEEN_READS = 10;
 	
 	private static Logger logger = LoggerFactory.getLogger(SerialPortGateway.class);
@@ -49,14 +49,24 @@ public class SerialPortGateway implements ISerialPortGateway {
 
 	@Override
 	public IByteQueue sendBytesAndWaitForResponse(IByteQueue bytesToWrite, int expectedResponseSizeInBytes) {
+		clear();
 		sendBytes(bytesToWrite);
 		
 		return waitForResponse(expectedResponseSizeInBytes);
 	}
 
+	private void clear() {
+		try {
+			serialPort.readBytes();
+		} catch (SerialPortException e) {
+			logger.error("Error while clearing port: %s", e.getMessage());
+		}
+	}
+
 	private void sendBytes(IByteQueue bytesToWrite) {
 		try {
 			serialPort.writeBytes(bytesToWrite.toByteArray());
+			logger.debug(Util.getByteStringFor(bytesToWrite.toByteArray()));
 		} catch (SerialPortException e) {
 			logger.error("Error while writing bytes: %s", e.getMessage());
 		}

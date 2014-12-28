@@ -43,7 +43,7 @@ public class P300VitotronicProtocol implements IVitotronicProtocol {
 	private final static byte WRITE_COMMAND = 0x02;
 	private final static byte ACK = 0x06;
 	private final static byte HEALTH_PING = 0x05;
-	private final static int STATIC_PARAMETER_RESPONSE_SIZE = 6;
+	private final static int STATIC_PARAMETER_RESPONSE_SIZE = 7;
 	
 	private final IParameterFactory parameterFactory;
 	private IByteQueue byteQueueToParse;
@@ -76,7 +76,7 @@ public class P300VitotronicProtocol implements IVitotronicProtocol {
 	public IByteQueue getByteQueueForReadingParameter(IParameter parameter) {
 		IByteQueue byteQueueForReadingParameter = new ByteQueue();
 		
-		addCommandRequestTo(byteQueueForReadingParameter, READ_COMMAND, parameter);
+		addCommandRequestTo(byteQueueForReadingParameter, READ_COMMAND, parameter.getByteQueueForRequest());
 		
 		return byteQueueForReadingParameter;
 	}
@@ -85,17 +85,17 @@ public class P300VitotronicProtocol implements IVitotronicProtocol {
 	public IByteQueue getByteQueueForWritingParameter(IParameter parameter) {
 		IByteQueue byteQueueForWritingParameter = new ByteQueue();
 		
-		addCommandRequestTo(byteQueueForWritingParameter, WRITE_COMMAND, parameter);
+		addCommandRequestTo(byteQueueForWritingParameter, WRITE_COMMAND, parameter.getByteQueueForWriting());
 		
 		return byteQueueForWritingParameter;
 	}
 
-	private void addCommandRequestTo(IByteQueue byteQueue, byte command, IParameter parameter) {
+	private void addCommandRequestTo(IByteQueue byteQueue, byte command, IByteQueue parameterBytes) {
 		byteQueue.enque(START_BYTE);
-		byteQueue.enque(getRequestSize(parameter));
+		byteQueue.enque(getRequestSize(parameterBytes));
 		byteQueue.enque(REQUEST_TELEGRAM_TYPE);
 		byteQueue.enque(command);
-		byteQueue.enqueAll(parameter.getByteQueue());
+		byteQueue.enqueAll(parameterBytes);
 		byteQueue.enque(getChecksumOf(byteQueue));
 	}
 
@@ -115,9 +115,7 @@ public class P300VitotronicProtocol implements IVitotronicProtocol {
 		return result;
 	}
 	
-	private byte getRequestSize(IParameter parameter) {
-		IByteQueue parameterBytes = parameter.getByteQueue();
-		
+	private byte getRequestSize(IByteQueue parameterBytes) {		
 		return (byte)(parameterBytes.size() + 2);
 	}
 	
@@ -128,7 +126,7 @@ public class P300VitotronicProtocol implements IVitotronicProtocol {
 	
 	@Override
 	public int expectedResetResponseSize() {
-		return 2;
+		return 1;
 	}
 	
 	@Override
@@ -211,14 +209,20 @@ public class P300VitotronicProtocol implements IVitotronicProtocol {
 
 	private <TParameterValue> IParameterWithValue<TParameterValue> parseParameter() {
 		int address = parseAddress();
-		IParameterWithValue<TParameterValue> parameter = parameterFactory.createParameterFor(address);
+		int dataSize = parseDataSize();
 		
-		byte[] dataBytes = parseDataBytes(parameter.getDataSize());
+		byte[] dataBytes = parseDataBytes(dataSize);
+
+		IParameterWithValue<TParameterValue> parameter = parameterFactory.createParameterFor(address);
 		parameter.parseDataBytes(dataBytes);
 		
 		return parameter;
 	}
 	
+	private int parseDataSize() {
+		return byteQueueToParse.deque();
+	}
+
 	private byte[] parseDataBytes(int dataSize) {
 		byte[] dataBytes = new byte[dataSize];
 		

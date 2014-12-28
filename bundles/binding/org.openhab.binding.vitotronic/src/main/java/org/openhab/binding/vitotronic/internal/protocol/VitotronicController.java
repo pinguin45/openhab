@@ -68,7 +68,7 @@ public class VitotronicController implements IVitotronicController {
 
 	private boolean tryInit(IByteQueue initRequestBytes, int initResponseSize) {
 		IByteQueue initResponse = serialPortGateway.sendBytesAndWaitForResponse(initRequestBytes, initResponseSize);
-		
+
 		if (vitotronicProtocol.isInitialized(initResponse))
 		{
 			return true;

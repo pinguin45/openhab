@@ -36,7 +36,6 @@
    <service>
       <provide interface="org.osgi.service.cm.ManagedService"/>
       <provide interface="org.osgi.service.event.EventHandler"/>
-      <provide interface="org.openhab.binding.vitotronic.internal.VitotronicBinding"/>
    </service>
    <property name="service.pid" type="String" value="org.openhab.vitotronic"/>
    

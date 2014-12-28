@@ -69,7 +69,7 @@ public class XMLConfigParameterFactoryTest {
 		IParameterWithValue<String> createdParameter = testObject.createParameterFor(address);
 		
 		assertNotNull(createdParameter);
-		assertArrayEquals(To.ByteArray("08 15 02 00 00"), createdParameter.getByteQueue().toByteArray());
+		assertArrayEquals(To.ByteArray("08 15 02 00 00"), createdParameter.getByteQueueForWriting().toByteArray());
 	}
 
 }

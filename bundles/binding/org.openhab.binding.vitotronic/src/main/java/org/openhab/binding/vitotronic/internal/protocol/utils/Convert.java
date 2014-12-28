@@ -27,11 +27,7 @@
  * to convey the resulting work.
  */
 package org.openhab.binding.vitotronic.internal.protocol.utils;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
-
-import com.sun.istack.internal.logging.Logger;
 
 /**
  * Methods for converting Datatypes
@@ -67,7 +63,15 @@ public class Convert {
 	public static byte toByte(String value, int dimension){ 
 		return (byte)Integer.parseInt(value, dimension);		
 	}
-		
+	
+	public static byte[] toByteArray(int value) {
+	    return new byte[] {
+	            (byte) value, 
+	            (byte)(value >>> 8),
+	            (byte)(value >>> 16),
+	            (byte)(value >>> 24)};
+	}
+	
 	/**
 	 * Creates a byte array from a list of Byte
 	 * @param list of Bytes

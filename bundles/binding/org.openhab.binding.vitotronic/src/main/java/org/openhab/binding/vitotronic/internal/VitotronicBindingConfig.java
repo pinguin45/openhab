@@ -28,10 +28,7 @@
  */
 package org.openhab.binding.vitotronic.internal;
 
-import org.openhab.binding.vitotronic.internal.protocol.Parameter;
 import org.openhab.core.binding.BindingConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Configuration for a VitotronicBinding
@@ -39,72 +36,23 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class VitotronicBindingConfig implements BindingConfig {
-	
-	private static Logger logger = LoggerFactory.getLogger(VitotronicBinding.class);
-	private String parameterNamespace = "org.openhab.binding.vitotronic.internal.protocol.parameters.";
-	private CommandTyp command;
-	private Parameter parameter;
+
 	private String itemName;
+	private int address;
 
 	public VitotronicBindingConfig(String itemName, String config) {
 		this.itemName = itemName;
 		parse(config);
 	}
 	
-	public CommandTyp getCommand() {
-		return command;
-	}
-	
-	public Parameter getParameter() {
-		return parameter;
-	}
-	
 	public String getItemName() {
 		return itemName;
 	}
 		
+	public int getAddress() {
+		return address;
+	}
 	private void parse(String config) {
-		String[] parts = config.split(":");
-		
-		if (parts.length >= 1)
-		{
-			 if (parts[0].equals("write")) 
-			 {
-				 command = CommandTyp.WRITE;
-			 }
-			 else
-			 {
-				 command = CommandTyp.READ;
-			 }
-			
-			 if (parts.length >= 2)
-			 {
-				 parameter = createParameterBy(parts[1]);
-			 }			
-		}
-	}
-	
-	private Parameter createParameterBy(String name) {
-		try {
-			Class<?> parameterType = Class.forName(parameterNamespace + name);
-									
-			return (Parameter) parameterType.getConstructor(null).newInstance(null);
-			
-		} catch (Exception e) {
-			logger.error("Kein Parameter mit dem Namen '%s'", name);
-		}
-		
-		return null;
-	}
-
-	/**
-	 * Enum für den Parameter typ
-	 * @author Robin Lenz
-	 * @since 1.0.0
-	 */
-	public enum CommandTyp
-	{
-		READ,
-		WRITE;
+		address = Integer.decode(config);
 	}	
 }

@@ -56,18 +56,30 @@ public class Parameter<TValue> implements IParameterWithValue<TValue> {
 		return dataBytes.length;
 	}
 	
-	public IByteQueue getByteQueue() {
+	@Override
+	public IByteQueue getByteQueueForRequest() {
 		IByteQueue result = new ByteQueue();
 		
 		result.enque(Convert.toHighByte(parameterDetails.getAddress()));
 		result.enque(Convert.toLowByte(parameterDetails.getAddress()));
 		result.enque(getDataSize());
+				
+		return result;
+	}
+	
+	@Override
+	public IByteQueue getByteQueueForWriting() {
+		IByteQueue result = new ByteQueue();
 		
+		result.enque(Convert.toHighByte(parameterDetails.getAddress()));
+		result.enque(Convert.toLowByte(parameterDetails.getAddress()));
+		result.enque(getDataSize());
+				
 		if (getDataSize() > 0)
 		{
 			result.enqueAll(dataBytes);
 		}
-		
+				
 		return result;
 	}
 	

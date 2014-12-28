@@ -60,4 +60,11 @@ public class ConfigDeserializerTest {
 		assertEquals("V/10", unit1.getInputFormula());
 		assertEquals("V*10", unit1.getOutputFormula());
 	}
+	
+	@Test
+	public void testParseHexInt() {
+		int value = Integer.decode("0x5525");
+		
+		System.out.println(value);
+	}
 }

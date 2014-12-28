@@ -50,26 +50,44 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 
 	private static Logger logger = LoggerFactory.getLogger(VitotronicBinding.class);
 	
-	private int refreshRate = 60000;
 	private ISerialPortGateway serialPortGateway;
 	private Lock controllerLock = new ReentrantLock();
 	
 	private VitotronicOpenhabConfig openhabConfig;
+	private IParameterFactory parameterFactory = new StaticParameterFactory();
 	
 	@Override
 	public void updated(Dictionary<String, ?> config)
 			throws ConfigurationException {
-		
+		logger.debug("Config update entered");
 		createVitotronicOpenhabConfigFor(config);
+		logger.debug("Config parsed");
+		initializeSerialPort();
+		logger.debug("Config updated");
+
+		setProperlyConfigured(true);
 	}
 
 	private void createVitotronicOpenhabConfigFor(Dictionary<String, ?> config) throws ConfigurationException {
 		openhabConfig = new VitotronicOpenhabConfig(config);
 	}
+	
+	private void initializeSerialPort() {
+		ISerialPort serialPort = createAndOpenSerialport();
+		
+		serialPortGateway = new SerialPortGateway(serialPort);
+	}
 
-	@Override
-	public boolean isProperlyConfigured() {
-		return serialPortGateway != null;
+	private ISerialPort createAndOpenSerialport() {
+		ISerialPort serialPort = new JsscSerialPort(openhabConfig.getSerialPortName());
+		
+		try {
+			serialPort.open();
+			serialPort.setParameter(4800, 8, 2, 2);
+		} catch (SerialPortException e) {
+			logger.error("Could not open serialport: " + e.getMessage());
+		}
+		return serialPort;
 	}
 
 	/**
@@ -77,7 +95,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 	 */
 	@Override
 	protected void internalReceiveCommand(String itemName, Command command) {
-
+		logger.debug("internalReceivedCommand entered");
 		VitotronicBindingConfig config = tryGetConfigFor(itemName);
 
 		if (config == null) {
@@ -101,35 +119,43 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 		
 		controllerLock.lock();
 		
-		controller.reset();
-		
-		if (controller.init())
-		{			
-			Parameter parameter = config.getParameter();
+		try	{
+			controller.reset();
 			
-			if (parameter instanceof IBooleanParameter && command instanceof OnOffType)
-			{
-				OnOffType boolCommand = (OnOffType)command;
+			if (controller.init())
+			{			
+				IParameter parameter = getParameterByAddress(config.getAddress());
 				
-				IBooleanParameter boolParameter = (IBooleanParameter)parameter;
-				boolParameter.setValue(boolCommand == OnOffType.ON);
-				
-				controller.write(boolParameter);
+				if (parameter instanceof IBooleanParameter && command instanceof OnOffType)	{
+					OnOffType boolCommand = (OnOffType)command;
+					
+					IBooleanParameter boolParameter = (IBooleanParameter)parameter;
+					boolParameter.setValue(boolCommand == OnOffType.ON);
+					
+					controller.write(boolParameter);
+				} else if (parameter instanceof IDecimalParameter && command instanceof DecimalType) {
+					DecimalType decimalCommand = (DecimalType)command;
+					
+					IDecimalParameter decimalParameter = (IDecimalParameter)parameter;
+					decimalParameter.setValue(decimalCommand.doubleValue());
+					
+					controller.write(decimalParameter);
+				}
 			}
+		} finally {
+			controllerLock.unlock();
 		}
-		
-		controllerLock.unlock();
 	}
 
 	private IVitotronicController createVitotronicController() {
-		IParameterFactory factory = null;
 		
-		IVitotronicController controller = new VitotronicController(new P300VitotronicProtocol(factory), serialPortGateway);
+		IVitotronicController controller = new VitotronicController(new P300VitotronicProtocol(parameterFactory), serialPortGateway);
 		return controller;
 	}
 	
 	@Override
 	protected void execute() {
+		logger.debug("Entered execute");
 		
 		if (serialPortGateway == null)
 		{
@@ -147,51 +173,57 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 		
 		controllerLock.lock();
 		
-		controller.reset();
-		
-		if (controller.init())
-		{			
-			List<VitotronicBindingConfig> parameterConfigs = getParameterConfigs();
+		try {
+			controller.reset();
 			
-			for (VitotronicBindingConfig parameterConfig : parameterConfigs)
-			{
-				execute(controller, parameterConfig);
+			if (controller.init())
+			{			
+				List<VitotronicBindingConfig> parameterConfigs = getParameterConfigs();
+				
+				for (VitotronicBindingConfig parameterConfig : parameterConfigs)
+				{
+					execute(controller, parameterConfig);
+				}
 			}
+		} finally {
+			controllerLock.unlock();
 		}
-		
-		controllerLock.unlock();
 	}
 
 	private void execute(IVitotronicController controller, VitotronicBindingConfig parameterConfig) {
-		Parameter parameter = parameterConfig.getParameter();
+		IParameter parameter = getParameterByAddress(parameterConfig.getAddress());
 		
 		if (parameter instanceof IStringParameter) 
 		{			
-			String value = controller.readValueOf((IStringParameter)parameterConfig.getParameter());
+			String value = controller.readValueOf((IStringParameter)parameter);
 			
 			eventPublisher.postUpdate(parameterConfig.getItemName(), new StringType(value));
 		}
 		
 		if (parameter instanceof IDecimalParameter) 
 		{			
-			double value = controller.readValueOf((IDecimalParameter)parameterConfig.getParameter());
+			double value = controller.readValueOf((IDecimalParameter)parameter);
 			
 			eventPublisher.postUpdate(parameterConfig.getItemName(), new DecimalType(value));
 		}
 		
 		if (parameter instanceof IIntegerParameter) 
 		{			
-			int value = controller.readValueOf((IIntegerParameter)parameterConfig.getParameter());
+			int value = controller.readValueOf((IIntegerParameter)parameter);
 			
 			eventPublisher.postUpdate(parameterConfig.getItemName(), new DecimalType(value));
 		}
 		
 		if (parameter instanceof IBooleanParameter) 
 		{			
-			boolean value = controller.readValueOf((IBooleanParameter)parameterConfig.getParameter());
+			boolean value = controller.readValueOf((IBooleanParameter)parameter);
 			
 			eventPublisher.postUpdate(parameterConfig.getItemName(), (value) ? OnOffType.ON : OnOffType.OFF);
 		}
+	}
+
+	private IParameter getParameterByAddress(int address) {
+		return parameterFactory.createParameterFor(address);
 	}
 
 	private List<VitotronicBindingConfig> getParameterConfigs() {
@@ -218,7 +250,9 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 
 	@Override
 	protected long getRefreshInterval() {
-		return refreshRate;
+		logger.debug("getRefresh entered");
+		logger.debug("Refreshrate" + openhabConfig.getRefreshRate());
+		return openhabConfig.getRefreshRate();
 	}
 
 	@Override

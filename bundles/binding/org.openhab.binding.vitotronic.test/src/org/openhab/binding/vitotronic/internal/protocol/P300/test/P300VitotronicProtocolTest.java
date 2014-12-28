@@ -38,13 +38,13 @@ public class P300VitotronicProtocolTest {
 
 	@Test
 	public void testGetByteQueueForReadingParameter() {
-		IParameter parameter = configureParameter();
+		IParameter parameter = configureParameterForReading();
 		
 		IVitotronicProtocol testObject = new P300VitotronicProtocol(unconfiguredParameterFactory());
 		byte[] foundBytesForReadingParameter = testObject.getByteQueueForReadingParameter(parameter).toByteArray();
 		
-		assertBytesEquals("41 06 00 01 00 F8 20 CB EA", foundBytesForReadingParameter);
-		verify(parameter, times(2)).getByteQueue();
+		assertBytesEquals("41 05 00 01 00 F8 02 00", foundBytesForReadingParameter);
+		verify(parameter, times(1)).getByteQueueForRequest();
 	}
 
 	private void assertBytesEquals(String expectedByteString, byte[] foundBytes) {
@@ -55,19 +55,29 @@ public class P300VitotronicProtocolTest {
 
 	@Test
 	public void testGetByteQueueForWritingParameter() {
-		IParameter parameter = configureParameter();
+		IParameter parameter = configureParameterForWriting();
 		
 		IVitotronicProtocol testObject = new P300VitotronicProtocol(unconfiguredParameterFactory());
 		byte[] foundBytesForWritingParameter = testObject.getByteQueueForWritingParameter(parameter).toByteArray();
 		
-		assertBytesEquals("41 06 00 02 00 F8 20 CB EB", foundBytesForWritingParameter);
-		verify(parameter, times(2)).getByteQueue();
+		assertBytesEquals("41 07 00 02 00 F8 02 20 CB EE", foundBytesForWritingParameter);
+		verify(parameter, times(1)).getByteQueueForWriting();
 	}
-
-	private IParameter configureParameter() {
+	
+	private IParameter configureParameterForReading() {
 		IParameter parameterMock = mock(IParameter.class);
 		
-		when(parameterMock.getByteQueue()).thenReturn(toByteQueue("00 F8 20 CB"));
+		when(parameterMock.getByteQueueForRequest()).thenReturn(toByteQueue("00 F8 02"));
+		when(parameterMock.getAddressSize()).thenReturn(2);
+		when(parameterMock.getDataSize()).thenReturn(2);
+		
+		return parameterMock;
+	}
+
+	private IParameter configureParameterForWriting() {
+		IParameter parameterMock = mock(IParameter.class);
+		
+		when(parameterMock.getByteQueueForWriting()).thenReturn(toByteQueue("00 F8 02 20 CB"));
 		when(parameterMock.getAddressSize()).thenReturn(2);
 		when(parameterMock.getDataSize()).thenReturn(2);
 		
@@ -85,27 +95,27 @@ public class P300VitotronicProtocolTest {
 	public void testExpectedResetResponseSize() {
 		IVitotronicProtocol testObject = new P300VitotronicProtocol(unconfiguredParameterFactory());
 		
-		assertEquals(2, testObject.expectedResetResponseSize());
+		assertEquals(1, testObject.expectedResetResponseSize());
 	}
 	
 	@Test
 	public void testExpectedReadingParameterResponseSize() {
-		IParameter parameter = configureParameter();
+		IParameter parameter = configureParameterForReading();
 		
 		IVitotronicProtocol testObject = new P300VitotronicProtocol(unconfiguredParameterFactory());
 		
-		assertEquals(10, testObject.expectedReadingParameterResponseSize(parameter));
+		assertEquals(11, testObject.expectedReadingParameterResponseSize(parameter));
 		verify(parameter).getAddressSize();
 		verify(parameter).getDataSize();
 	}
 	
 	@Test
 	public void testExpectedWritingParameterResponseSize() {
-		IParameter parameter = configureParameter();
+		IParameter parameter = configureParameterForWriting();
 		
 		IVitotronicProtocol testObject = new P300VitotronicProtocol(unconfiguredParameterFactory());
 		
-		assertEquals(10, testObject.expectedWritingParameterResponseSize(parameter));
+		assertEquals(11, testObject.expectedWritingParameterResponseSize(parameter));
 		verify(parameter).getAddressSize();
 		verify(parameter).getDataSize();
 	}
@@ -136,7 +146,7 @@ public class P300VitotronicProtocolTest {
 	@Test
 	public void testParseReadParameterResponse() {
 		IVitotronicProtocol testObject = new P300VitotronicProtocol(configuredParameterFactory());
-		IByteQueue bytesToParse = toByteQueue("06 41 06 01 01 00 F8 20 CB EB");
+		IByteQueue bytesToParse = toByteQueue("06 41 07 01 01 00 F8 02 20 CB EE");
 		IParameter parsedParameter = testObject.parseReadParameterResponse(bytesToParse);
 		
 		assertNotNull(parsedParameter);
@@ -146,7 +156,7 @@ public class P300VitotronicProtocolTest {
 	@Test
 	public void testParseWriteParameterResponse() {
 		IVitotronicProtocol testObject = new P300VitotronicProtocol(configuredParameterFactory());
-		IByteQueue bytesToParse = toByteQueue("06 41 06 01 02 00 F8 20 CB EC");
+		IByteQueue bytesToParse = toByteQueue("06 41 07 01 02 00 F8 02 20 CB EF");
 		IParameter parsedParameter = testObject.parseWriteParameterResponse(bytesToParse);
 		
 		assertNotNull(parsedParameter);

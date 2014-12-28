@@ -97,7 +97,7 @@ public class SerialPortGatewayTest {
 		assertArrayEquals(expectedResponseBytes.toByteArray(), foundResponseBytes.toByteArray());
 	}
 	
-	@Test(expected = WaitForResponseTimedoutException.class, timeout = 2000)
+	@Test(expected = WaitForResponseTimedoutException.class, timeout = 10000)
 	public void testSendBytesAndWaitForResponse_WithTimeout() throws Exception {
 		IByteQueue requestBytes = To.ByteQueue("01 02 03 04 05");
 		ISerialPort serialPort = mock(ISerialPort.class);
