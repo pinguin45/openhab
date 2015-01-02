@@ -38,6 +38,7 @@ import org.openhab.binding.vitotronic.internal.protocol.utils.*;
 import org.openhab.core.binding.AbstractActiveBinding;
 import org.openhab.core.library.types.*;
 import org.openhab.core.types.Command;
+import org.openhab.core.types.UnDefType;
 import org.osgi.service.cm.*;
 import org.slf4j.*;
 
@@ -50,7 +51,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 
 	private static Logger logger = LoggerFactory.getLogger(VitotronicBinding.class);
 	
-	private ISerialPortGateway serialPortGateway;
+	private ISerialPort serialPort;
 	private Lock controllerLock = new ReentrantLock();
 	
 	private VitotronicOpenhabConfig openhabConfig;
@@ -59,12 +60,11 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 	@Override
 	public void updated(Dictionary<String, ?> config)
 			throws ConfigurationException {
-		logger.debug("Config update entered");
+		
 		createVitotronicOpenhabConfigFor(config);
-		logger.debug("Config parsed");
+		
 		initializeSerialPort();
-		logger.debug("Config updated");
-
+		
 		setProperlyConfigured(true);
 	}
 
@@ -73,21 +73,25 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 	}
 	
 	private void initializeSerialPort() {
-		ISerialPort serialPort = createAndOpenSerialport();
-		
-		serialPortGateway = new SerialPortGateway(serialPort);
+		serialPort = createAndOpenSerialport();
 	}
 
 	private ISerialPort createAndOpenSerialport() {
-		ISerialPort serialPort = new JsscSerialPort(openhabConfig.getSerialPortName());
+		//ISerialPort serialPort = new JsscSerialPort(openhabConfig.getSerialPortName());
+		ISerialPort serialPort = TCPSerialPort.Create("192.168.178.42:2000");
 		
+		openSerialPort(serialPort);
+		
+		return serialPort;
+	}
+
+	private void openSerialPort(ISerialPort serialPort) {
 		try {
 			serialPort.open();
 			serialPort.setParameter(4800, 8, 2, 2);
 		} catch (SerialPortException e) {
 			logger.error("Could not open serialport: " + e.getMessage());
 		}
-		return serialPort;
 	}
 
 	/**
@@ -95,20 +99,13 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 	 */
 	@Override
 	protected void internalReceiveCommand(String itemName, Command command) {
-		logger.debug("internalReceivedCommand entered");
 		VitotronicBindingConfig config = tryGetConfigFor(itemName);
 
 		if (config == null) {
 			logger.error("No config found for item %s", itemName);
 			return;
 		}
-		
-		if (serialPortGateway == null)
-		{
-			logger.error("Serialport is not initialized.");
-			return;
-		}
-		
+				
 		IVitotronicController controller = createVitotronicController();
 		
 		if (controller == null) 
@@ -140,6 +137,13 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 					decimalParameter.setValue(decimalCommand.doubleValue());
 					
 					controller.write(decimalParameter);
+				} else if (parameter instanceof IIntegerParameter && command instanceof DecimalType) {
+					DecimalType decimalCommand = (DecimalType)command;
+					
+					IIntegerParameter integerParameter = (IIntegerParameter)parameter;
+					integerParameter.setValue(decimalCommand.intValue());
+					
+					controller.write(integerParameter);
 				}
 			}
 		} finally {
@@ -149,20 +153,27 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 
 	private IVitotronicController createVitotronicController() {
 		
+		EnsureThatSerialPortIsOpen();
+		
+		ISerialPortGateway serialPortGateway = new SerialPortGateway(serialPort);
+			
 		IVitotronicController controller = new VitotronicController(new P300VitotronicProtocol(parameterFactory), serialPortGateway);
 		return controller;
 	}
 	
-	@Override
-	protected void execute() {
-		logger.debug("Entered execute");
-		
-		if (serialPortGateway == null)
-		{
-			logger.error("Serialport is not initialized.");
-			return;
+	private void EnsureThatSerialPortIsOpen() {
+		if (serialPort == null) {
+			serialPort = createAndOpenSerialport();
 		}
 		
+		if (!serialPort.isOpen()) {
+			openSerialPort(serialPort);
+		}
+	}
+
+	@Override
+	protected void execute() {
+				
 		IVitotronicController controller = createVitotronicController();
 		
 		if (controller == null) 
@@ -182,7 +193,13 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 				
 				for (VitotronicBindingConfig parameterConfig : parameterConfigs)
 				{
-					execute(controller, parameterConfig);
+					try
+					{
+						execute(controller, parameterConfig);
+					} catch (Exception  e) {
+						logger.error(e.getMessage());
+						eventPublisher.postUpdate(parameterConfig.getItemName(), UnDefType.UNDEF);
+					}
 				}
 			}
 		} finally {
@@ -250,8 +267,6 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 
 	@Override
 	protected long getRefreshInterval() {
-		logger.debug("getRefresh entered");
-		logger.debug("Refreshrate" + openhabConfig.getRefreshRate());
 		return openhabConfig.getRefreshRate();
 	}
 
