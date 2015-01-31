@@ -51,7 +51,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 
 	private static Logger logger = LoggerFactory.getLogger(VitotronicBinding.class);
 	
-	private ISerialPort serialPort;
+	//private ISerialPort serialPort;
 	private Lock controllerLock = new ReentrantLock();
 	
 	private VitotronicOpenhabConfig openhabConfig;
@@ -63,7 +63,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 		
 		createVitotronicOpenhabConfigFor(config);
 		
-		initializeSerialPort();
+		//initializeSerialPort();
 		
 		setProperlyConfigured(true);
 	}
@@ -72,9 +72,9 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 		openhabConfig = new VitotronicOpenhabConfig(config);
 	}
 	
-	private void initializeSerialPort() {
+	/*private void initializeSerialPort() {
 		serialPort = createAndOpenSerialport();
-	}
+	}*/
 
 	private ISerialPort createAndOpenSerialport() {
 		//ISerialPort serialPort = new JsscSerialPort(openhabConfig.getSerialPortName());
@@ -105,18 +105,20 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 			logger.error("No config found for item %s", itemName);
 			return;
 		}
-				
-		IVitotronicController controller = createVitotronicController();
-		
-		if (controller == null) 
-		{
-			logger.error("No Vitotronic Controller found");
-			return;
-		}
-		
+
 		controllerLock.lock();
-		
+	
+		ISerialPort serialPort = createAndOpenSerialport();
+
 		try	{
+			IVitotronicController controller = createVitotronicController(serialPort);
+		
+			if (controller == null) 
+			{
+				logger.error("No Vitotronic Controller found");
+				return;
+			}
+		
 			controller.reset();
 			
 			if (controller.init())
@@ -147,13 +149,22 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 				}
 			}
 		} finally {
+			closeSerialPort(serialPort);
 			controllerLock.unlock();
 		}
 	}
 
-	private IVitotronicController createVitotronicController() {
+	private void closeSerialPort(ISerialPort serialPort) {
+		try {
+			serialPort.close();
+		} catch (SerialPortException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	private IVitotronicController createVitotronicController(ISerialPort serialPort) {
 		
-		EnsureThatSerialPortIsOpen();
+		EnsureThatSerialPortIsOpen(serialPort);
 		
 		ISerialPortGateway serialPortGateway = new SerialPortGateway(serialPort);
 			
@@ -161,11 +172,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 		return controller;
 	}
 	
-	private void EnsureThatSerialPortIsOpen() {
-		if (serialPort == null) {
-			serialPort = createAndOpenSerialport();
-		}
-		
+	private void EnsureThatSerialPortIsOpen(ISerialPort serialPort) {
 		if (!serialPort.isOpen()) {
 			openSerialPort(serialPort);
 		}
@@ -173,18 +180,19 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 
 	@Override
 	protected void execute() {
-				
-		IVitotronicController controller = createVitotronicController();
-		
-		if (controller == null) 
-		{
-			logger.error("No Vitotronic Controller found");
-			return;
-		}
-		
+
 		controllerLock.lock();
+		ISerialPort serialPort = createAndOpenSerialport();
+		try {	
 		
-		try {
+			IVitotronicController controller = createVitotronicController(serialPort);
+			
+			if (controller == null) 
+			{
+				logger.error("No Vitotronic Controller found");
+				return;
+			}
+		
 			controller.reset();
 			
 			if (controller.init())
@@ -203,6 +211,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 				}
 			}
 		} finally {
+			closeSerialPort(serialPort);
 			controllerLock.unlock();
 		}
 	}
