@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2014, openHAB.org and others.
+ * Copyright (c) 2010-2015, openHAB.org and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -65,6 +65,9 @@ public class ZWaveSceneConverter extends ZWaveCommandClassConverter<ZWaveBasicCo
 
 	@Override
 	void handleEvent(ZWaveCommandClassValueEvent event, Item item, Map<String, String> arguments) {
+		if(arguments.get("scene")==null)
+			return;
+		
 		int scene = Integer.parseInt(arguments.get("scene"));
 		if(scene != (Integer)event.getValue())
 			return;

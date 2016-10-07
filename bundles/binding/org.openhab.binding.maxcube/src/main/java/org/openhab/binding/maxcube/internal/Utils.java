@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2014, openHAB.org and others.
+ * Copyright (c) 2010-2015, openHAB.org and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -97,6 +97,7 @@ public final class Utils {
 	 * 			the time to be converted based on a single byte
 	 * @return the date time based on the values provided
 	 */
+	@SuppressWarnings("deprecation")
 	public static Date resolveDateTime(int date, int time) {
 		
 		int month = ((date & 0xE000) >> 12)+((date & 0x80) >> 7);

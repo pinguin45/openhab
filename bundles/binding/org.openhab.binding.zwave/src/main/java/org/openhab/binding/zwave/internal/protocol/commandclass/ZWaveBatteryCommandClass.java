@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2014, openHAB.org and others.
+ * Copyright (c) 2010-2015, openHAB.org and others.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -42,6 +42,8 @@ public class ZWaveBatteryCommandClass extends ZWaveCommandClass implements ZWave
 	private static final int BATTERY_GET = 0x02;
 	private static final int BATTERY_REPORT = 0x03;
 	
+	private Integer batteryLevel = null;
+	
 	/**
 	 * Creates a new instance of the ZWaveBatteryCommandClass class.
 	 * @param node the node this command class belongs to
@@ -78,9 +80,9 @@ public class ZWaveBatteryCommandClass extends ZWaveCommandClass implements ZWave
 			case BATTERY_REPORT:
 				logger.trace("Process Battery Report");
 				
-				int value = serialMessage.getMessagePayloadByte(offset + 1); 
-				logger.debug(String.format("Node %d: Battery report value = 0x%02X", this.getNode().getNodeId(), value));
-				ZWaveCommandClassValueEvent zEvent = new ZWaveCommandClassValueEvent(this.getNode().getNodeId(), endpoint, this.getCommandClass(), value);
+				batteryLevel = serialMessage.getMessagePayloadByte(offset + 1); 
+				logger.debug(String.format("Node %d: Battery report value = 0x%02X", this.getNode().getNodeId(), batteryLevel));
+				ZWaveCommandClassValueEvent zEvent = new ZWaveCommandClassValueEvent(this.getNode().getNodeId(), endpoint, this.getCommandClass(), batteryLevel);
 				this.getController().notifyEventListeners(zEvent);
 
 				if (this.getNode().getNodeStage() != NodeStage.DONE)
@@ -119,5 +121,13 @@ public class ZWaveBatteryCommandClass extends ZWaveCommandClass implements ZWave
 		result.add(getValueMessage());
 		
 		return result;
+	}
+	
+	/**
+	 * Returns the current battery level. If the battery level is unknown, returns null
+	 * @return
+	 */
+	public Integer getBatteryLevel() {
+		return batteryLevel;
 	}
 }

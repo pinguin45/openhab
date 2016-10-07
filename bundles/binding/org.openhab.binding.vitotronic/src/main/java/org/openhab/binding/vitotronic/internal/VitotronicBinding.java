@@ -78,7 +78,7 @@ public class VitotronicBinding extends AbstractActiveBinding<VitotronicBindingPr
 
 	private ISerialPort createAndOpenSerialport() {
 		//ISerialPort serialPort = new JsscSerialPort(openhabConfig.getSerialPortName());
-		ISerialPort serialPort = TCPSerialPort.Create("192.168.178.42:2000");
+		ISerialPort serialPort = TCPSerialPort.Create("192.168.178.55:2000");
 		
 		openSerialPort(serialPort);
 		
